@@ -2,6 +2,11 @@
 
 import cherrypy
 
+__version__ = '0.0.1'
+__license__ = 'ASLv2'
+__author__ = 'Josh Bell'
+__author_email__ = 'josh.bell@rackspace.com'
+
 class NodeStatus(object):
 
 	def __init__(self, **kwargs):
