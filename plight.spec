@@ -34,7 +34,6 @@ rm -rf $RPM_BUILD_ROOT
 %doc README.md
 %{python_sitelib}/%{name}
 %{python_sitelib}/%{name}*.egg-info
-%attr(0755,-,-) %{_bindir}/plightd
 %attr(0755,-,-) %{_bindir}/plight
 
 
