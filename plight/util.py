@@ -2,6 +2,7 @@
 
 import cherrypy
 from cherrypy.process.plugins import PIDFile
+from cherrypy.process.plugins import Daemonizer
 
 import ConfigParser
 import sys
@@ -25,8 +26,9 @@ def get_server_config(config):
     }
 
 def start_server(config):
-	cherrypy.config.update(config)
-	cherrypy.quickstart(NodeStatus())
+    Daemonizer(cherrypy.engine).subscribe()
+    cherrypy.config.update(config)
+    cherrypy.quickstart(NodeStatus())
     signal.signal(signal.SIGTERM, stop_server)
     signal.signal(signal.SIGKILL, stop_server)
     create_lock_file()
