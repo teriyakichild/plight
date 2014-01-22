@@ -16,14 +16,20 @@ PID_FILE = '/var/run/plight.pid'
 def get_config(config_file=plight.CONFIG_FILE):
     config = ConfigParser.ConfigParser()
     config.read(config_file)
-    return config
+    return {
+           'host': config.get('webserver', 'host'),
+           'port': config.getint('webserver', 'port'),
+           'state_file': config.get('permanents', 'statefile'),
+           'log_file': config.get('logging', 'logfile'),
+           'log_level': config.get('logging', 'loglevel')
+    }
 
 def get_server_config(config=None):
     if config is None:
         config = get_config()
     return {
-            'server.socket_host': config.get('webserver', 'host'),
-            'server.socket_port': config.getint('webserver', 'port'),
+            'server.socket_host': config['host'],
+            'server.socket_port': config['port'],
             'log.screen': True
     }
 
@@ -52,6 +58,7 @@ def run():
         cli_fail()
     except AttributeError:
         cli_fail()
+    config = get_config()
     server_config = get_server_config(config)
     if mode.lower() in ['enable','disable']:
         node = NodeStatus()
