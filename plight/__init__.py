@@ -48,7 +48,7 @@ class NodeStatus(object):
     # Web Server Operations
     @cherrypy.expose
     def index(self):
-    return self.get_node_status()
+        return self.get_node_status()
 
     @cherrypy.expose
     def status(self):
