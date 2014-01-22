@@ -8,7 +8,8 @@ __author__ = 'Josh Bell'
 __author_email__ = 'josh.bell@rackspace.com'
 
 class NodeStatus(object):
-    def __init__(self, **kwargs):
+    def __init__(self, state_file, **kwargs):
+        self.state_file = state_file
         self._build_params(kwargs)
 
     def _build_params(params):
