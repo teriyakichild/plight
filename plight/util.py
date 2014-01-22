@@ -13,7 +13,7 @@ import signal
 
 PID_FILE = '/var/run/plight.pid'
 
-def get_config(config_file):
+def get_config(config_file=plight.CONFIG_FILE):
     config = ConfigParser.ConfigParser()
     config.read(config_file)
     return config
@@ -50,7 +50,7 @@ def run():
         cli_fail()
     except AttributeError:
         cli_fail()
-    config = get_config(plight.CONFIG_FILE)
+    config = get_config()
     server_config = get_server_config(config)
     if mode.lower() in ['enable','disable']:
         node = NodeStatus()
