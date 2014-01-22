@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
 import cherrypy
+from cherrypy.process.plugins import PIDFile
+
 import ConfigParser
 import sys
 import plight
 import daemon
 import daemon.pidlockfile 
 import signal
+
+PID_FILE = '/var/run/plight.pid'
 
 def get_config(config_file):
     config = ConfigParser.ConfigParser()
@@ -29,18 +33,10 @@ def start_server(config):
 
 def stop_server(signum, stack):
     cherrypy.engine.exit()
-    remove_lock_file()
     sys.exit()
 
-def create_lock_file():
-    pidfile = daemon.pidlockfile.PIDLockFile("/var/run/zebra.pid")
-    with daemon.DaemonContext(pidfile=pidfile):
-        check = Node()
-        check.run()
-
-def remove_lock_file():
-    #TODO so umm.. ya ?
-    return    
+def create_lock_file(lock_file=PID_FILE):
+    PIDFile(cherrypy.engine, lock_file).subscribe()
 
 def cli_fail():
     sys.stderr.write('{0} [start|enable|disable]'.format(sys.argv[0]))
