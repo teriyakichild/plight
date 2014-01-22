@@ -8,18 +8,18 @@ __author__ = 'Josh Bell'
 __author_email__ = 'josh.bell@rackspace.com'
 
 class NodeStatus(object):
-	def __init__(self, **kwargs):
+    def __init__(self, **kwargs):
         self._build_params(kwargs)
 
-	def _build_params(params):
+    def _build_params(params):
         for param, value in params.items():
-			setattr(self, param, value)
+            setattr(self, param, value)
 
     # Operable Functions
     def set_node_disabled(self):
         open(self.state_file, 'a').close()
-		current_status = 'DISABLED'
-		return current_status
+        current_status = 'DISABLED'
+        return current_status
 
     def set_node_enabled(self):
         if os.path.exists(self.state_file): 
@@ -29,7 +29,7 @@ class NodeStatus(object):
             except OSError, e:
                 #TODO: we dont do anything with this
                 error = "Unable to enable node - Error: {} - {}.".format(e.filename, e.strerror)
-		return self.get_node_status()
+        return self.get_node_status()
 
     def set_node_state(self, state):
         if state.lower() == 'enable':
@@ -48,7 +48,7 @@ class NodeStatus(object):
     # Web Server Operations
     @cherrypy.expose
     def index(self):
-	return self.get_node_status()
+    return self.get_node_status()
 
     @cherrypy.expose
     def status(self):
