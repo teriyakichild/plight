@@ -1,0 +1,240 @@
+#!/usr/bin/python
+#
+# Init script skeleton for Python-based service control scripts
+#
+# chkconfig: 123456 1 99
+# description: My service
+#
+# Author: Josh Johnson <lionface dot lemonface at gmail dot com>
+#
+#
+### BEGIN INIT INFO
+# Provides: my-service
+# Required-Start: 
+# Required-Stop: 
+# Default-Start:  123456
+# Default-Stop:  123456
+# Short-Description: My service
+# Description: My service
+### END INIT INFO
+
+import sys, os, subprocess, re, time
+
+##### Globals #######################
+# service name, necessary paths
+SERVICE = 'my-service'
+LOCK_FILE = '/var/lock/subsys/' + SERVICE
+
+
+# ANSI codes
+MOVE_CURSOR = '\033[60G'
+FAILURE_COLOR = '\033[1;31m'
+SUCCESS_COLOR = '\033[1;32m'
+NO_COLOR = '\033[0m'
+
+def echo_success():
+    """
+    Port of standard RHEL function, echos pretty colorized "[  OK  ]" after 
+    output
+    """
+    print "%s[  %sOK%s  ]" % (MOVE_CURSOR, SUCCESS_COLOR, NO_COLOR)
+
+def echo_failure():
+    """
+    Port of standard RHEL function, echos pretty colorized "[FAILED]" after 
+    output
+    """
+    print "%s[%sFAILED%s]" % (MOVE_CURSOR, FAILURE_COLOR, NO_COLOR)
+
+def lock():
+    """
+    Create the /var/lock/subsys file
+    """
+    open(LOCK_FILE, 'w').close()
+    
+def locked():
+    """
+    Return True if the lock file exists
+    """
+    return os.path.exists(LOCK_FILE)
+    
+def unlock():
+    """
+    Remove the /var/lock/subsys file
+    """
+    os.remove(LOCK_FILE)
+
+def start():
+    """
+    Do whatever needs to be done.. this is where you start any applications,
+    mount filesystems, etc.
+    """
+    print "Starting...",
+    lock()
+    # do stuff
+    
+    echo_success()
+
+def stop():
+    """
+    Shut everything down, clean up.
+    """
+    print "Stopping...",
+    # do stuff
+    unlock()
+    echo_success()
+    
+def restart():
+    """
+    Stop and then start
+    """
+    stop()
+    start()
+    
+def status():
+    """
+    Print any relevant status info, and return a status code, an integer:
+    
+    0	      program is running or service is OK
+    1	      program is dead and /var/run pid file exists
+    2	      program is dead and /var/lock lock file exists
+    3	      program is not running
+    4	      program or service status is unknown
+    5-99	  reserved for future LSB use
+    100-149	  reserved for distribution use
+    150-199	  reserved for application use
+    200-254	  reserved
+    
+    @see: http://dev.linux-foundation.org/betaspecs/booksets/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+    """
+    if not locked():
+        # this is dubious! if you're controlling another process, you should check its
+        # PID file or use some other means.. consider this an example
+        print "Program isn't running"
+        return 3
+    else:
+        print "Everything is A-OK"
+        return 0
+
+def test():
+    """
+    This is my way of "unit testing" the script. This function
+    calls each of actions, mimicking the switchboard below. 
+    
+    It then verifies that the functions did what they were supposed to, 
+    and reports any problems to stderr.
+    
+    @TODO: this could be used to inspect the system (e.g. open a web page if this is
+    a web server control script) instead of the script.
+    
+    @TODO: you'll need to also check for PID files and running processes!
+    """
+    # Since this will turn off the system when its complete, 
+    # I want to warn the user and give them the chance to opt out if they 
+    # chose this option by accident.
+    
+    ok = raw_input("""
+******************
+TESTING MY SERVICE
+******************
+
+This will TURN OFF my-service after all the tests.
+
+This should only be done for testing and debugging purposes.
+
+Are you sure you want to do this? [Y/N]: """
+    ).lower()
+    
+    if ok != 'y':
+        print >> sys.stderr, "Aborting..."
+        return
+
+    start()
+    # Do stuff to check the start() function     
+    #
+    # 
+    
+    print "Verifying Lock File...",
+    if os.path.exists(LOCK_FILE):
+        echo_success()
+    else:
+        echo_failure()
+        print >> sys.stderr, "ERROR: Lock file was NOT written"
+    
+    
+    
+    # we call status a couple of times so we can test if it's returning the right
+    # output under different circumstances
+    status()
+        
+    stop()
+    # Do stuff to check the stop() function     
+    #
+    # 
+        
+    print "Checking lock file after stop...",
+    
+    if os.path.exists(LOCK_FILE):
+        echo_failure()
+        print >> sys.stderr, "ERROR: Could not remove lock file"
+    else:
+        echo_success()
+    
+    # one more time to see what it looks like when the service off
+    status()
+
+
+# Main program switchboard - wrap everything in a try block to
+# ensure the right return code is sent to the shell, and keep things tidy.
+# 
+# @TODO: need to raise custom exception instead of ValueError, and 
+#        handle other exceptions better. 
+#
+# @TODO: put lock/unlock calls inside of start/stop?
+if __name__ == '__main__':
+    try:
+        # if theres fewer than 2 options on the command line 
+        # (sys.argv[0] is the program name)
+        if len(sys.argv) == 1:
+            raise ValueError;  
+            
+        action = str(sys.argv[1]).strip().lower()
+        
+        if action == 'start':
+            lock()
+            start()
+            sys.exit(0)
+        elif action == 'stop':
+            stop()
+            unlock()
+            echo_success()
+            sys.exit(0)
+        elif action == 'restart' or action == 'force-reload':
+            restart()
+            sys.exit(0)
+        elif action == 'status':
+            OK = status()
+            sys.exit(OK)
+        elif action == 'test':
+            test()
+            sys.exit(0)
+        else:
+            raise ValueError
+    
+    except (SystemExit):
+        # calls to sys.exit() raise this error :(
+        pass
+    except (ValueError):
+        echo_failure()
+        print >> sys.stderr, "Usage: %s [start|stop|restart|force-reload|status|test]" % (SERVICE_NAME)
+        # return 2 for "bad command line option"
+        sys.exit(2)
+    except:
+        # all other exceptions get caught here
+        extype, value = sys.exc_info()[:2]
+        echo_failure()
+        print >> sys.stderr, "ERROR: %s (%s)" % (extype, value)
+        # return 1 for "general error"
+        sys.exit(1)
+
+        
