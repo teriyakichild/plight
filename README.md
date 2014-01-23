@@ -1,15 +1,13 @@
 #Plight
 
 ## Description
-A Application and Load Balancer agnostic tool to control node availability in load balancer pools. 
+An Application and Load Balancer agnostic tool to control node availability in load balancer pools.
 
 ## TODO
-1. setup.py is referencing variables from the library that dont exist yet
-2. haven't actualy run it to verify functionality
-3. Could we simplify this and only utilize standard libraries?
-4. needs scripts/plightd.init to exist
-5. PID creation in plight.util.create_lock_file() and remove_lock_file() needs to be vetted
-6. Script needs to daemonize itself properly
+1. haven't actualy run it to verify functionality
+2. needs scripts/plightd.init to be filled out
+3. verify PID creation
+4. Verify Daemonize is working
 
 
 ##Regarding Licensing
