@@ -7,6 +7,8 @@ __license__ = 'ASLv2'
 __author__ = 'Josh Bell'
 __author_email__ = 'josh.bell@rackspace.com'
 
+CONFIG_FILE = '/etc/plight.conf'
+
 class NodeStatus(object):
     def __init__(self, state_file, **kwargs):
         self.state_file = state_file
