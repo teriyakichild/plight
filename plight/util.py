@@ -7,8 +7,6 @@ from cherrypy.process.plugins import Daemonizer
 import ConfigParser
 import sys
 import plight
-import daemon
-import daemon.pidlockfile 
 import signal
 
 PID_FILE = '/var/run/plight.pid'
