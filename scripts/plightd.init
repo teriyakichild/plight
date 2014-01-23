@@ -22,7 +22,7 @@ import sys, os, subprocess, re, time
 
 ##### Globals #######################
 # service name, necessary paths
-SERVICE = 'my-service'
+SERVICE = 'plight'
 LOCK_FILE = '/var/lock/subsys/' + SERVICE
 
 
