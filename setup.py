@@ -8,7 +8,7 @@ sys.path.insert(0, '.')
 from plight import __version__, __author__, __author_email__, __license__
 
 NAME = "plight"
-SHORT_DESC = "Python bindings or interacting with PasswordSafe API"
+SHORT_DESC = "Application and Load Balancer agnostic status tool"
 
 
 if __name__ == "__main__":

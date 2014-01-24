@@ -4,11 +4,12 @@
 An Application and Load Balancer agnostic tool to control node availability in load balancer pools.
 
 ## TODO
-1. haven't actualy run it to verify functionality
-2. needs scripts/plightd.init to be filled out
-3. verify PID creation
-4. Verify Daemonize is working
+1. ~~haven't actualy run it to verify functionality~~
+2. ~~needs scripts/plightd.init to be filled out~~
+3. ~~verify PID creation~~
+4. ~~Verify Daemonize is working~~
 5. Convert from signal module to cherrypy's SingalHandler
+6. Rewrite to support centos/rhel5
 
 ##Regarding Licensing
 
