@@ -10,8 +10,7 @@ import plight
 import signal
 import os
 
-#PID_FILE = '/var/run/plight/plight.pid'
-PID_FILE = '/tmp/plight.pid'
+PID_FILE = '/var/run/plight.pid'
 
 def get_config(config_file=plight.CONFIG_FILE):
     config = ConfigParser.ConfigParser()
@@ -39,12 +38,10 @@ def _daemonize():
 
 def start_server(config, server_config):
     _daemonize()
-#    Daemonizer(cherrypy.engine).subscribe()
     cherrypy.config.update(server_config)
     cherrypy.quickstart(plight.NodeStatus(state_file=config['state_file']))
     signal.signal(signal.SIGTERM, _shutdown_server)
     signal.signal(signal.SIGKILL, _shutdown_server)
-#    create_lock_file()
 
 def _shutdownp_server(signum, stack):
     cherrypy.engine.exit()
@@ -58,9 +55,6 @@ def stop_server():
         os.kill(int(pid), signal.SIGTERM)
     else:
         print "no pid file available"
-
-#def create_lock_file(lock_file=PID_FILE):
-#    PIDFile(cherrypy.engine, lock_file).subscribe()
 
 def cli_fail():
     sys.stderr.write('{0} [start|enable|disable]'.format(sys.argv[0]))
