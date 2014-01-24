@@ -19,6 +19,7 @@
 ### END INIT INFO
 
 import sys, os, subprocess, re, time
+import plight.util
 
 ##### Globals #######################
 # service name, necessary paths
@@ -72,6 +73,7 @@ def start():
     print "Starting...",
     lock()
     # do stuff
+    plight.util.start_server(config=plight.util.get_config(), server_config=plight.util.get_server_config())
     
     echo_success()
 
@@ -81,6 +83,7 @@ def stop():
     """
     print "Stopping...",
     # do stuff
+    plight.util.stop_server()
     unlock()
     echo_success()
     

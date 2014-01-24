@@ -8,6 +8,7 @@ import ConfigParser
 import sys
 import plight
 import signal
+import os
 
 PID_FILE = '/var/run/plight.pid'
 
@@ -31,20 +32,29 @@ def get_server_config(config=None):
             'log.screen': True
     }
 
-def start_server(config):
+def _daemonize():
     Daemonizer(cherrypy.engine).subscribe()
-    cherrypy.config.update(config)
-    cherrypy.quickstart(NodeStatus())
-    signal.signal(signal.SIGTERM, stop_server)
-    signal.signal(signal.SIGKILL, stop_server)
-    create_lock_file()
+    PIDFile(cherrypy.engine, PID_FILE).subscribe()
 
-def stop_server(signum, stack):
+def start_server(config, server_config):
+    _daemonize()
+    cherrypy.config.update(server_config)
+    cherrypy.quickstart(plight.NodeStatus(state_file=config['state_file']))
+    signal.signal(signal.SIGTERM, _shutdown_server)
+    signal.signal(signal.SIGKILL, _shutdown_server)
+
+def _shutdownp_server(signum, stack):
     cherrypy.engine.exit()
     sys.exit()
 
-def create_lock_file(lock_file=PID_FILE):
-    PIDFile(cherrypy.engine, lock_file).subscribe()
+def stop_server():
+    if os.path.isfile(PID_FILE):
+        fp = open(PID_FILE, 'r')
+        pid = fp.read()
+        fp.close()
+        os.kill(int(pid), signal.SIGTERM)
+    else:
+        print "no pid file available"
 
 def cli_fail():
     sys.stderr.write('{0} [start|enable|disable]'.format(sys.argv[0]))
@@ -59,9 +69,11 @@ def run():
     config = get_config()
     server_config = get_server_config(config)
     if mode.lower() in ['enable','disable']:
-        node = NodeStatus()
+        node = plight.NodeStatus(state_file=config['state_file'])
         node.set_node_state(mode)
-    elif node.lower() == 'start':
-        start_server(config)
+    elif mode.lower() == 'start':
+        start_server(config, server_config)
+    elif mode.lower() == 'stop':
+        stop_server()
     else:
         cli_fail()

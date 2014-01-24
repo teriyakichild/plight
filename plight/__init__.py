@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import cherrypy
+import os
 
 __version__ = '0.0.1'
 __license__ = 'ASLv2'
@@ -10,13 +11,8 @@ __author_email__ = 'josh.bell@rackspace.com'
 CONFIG_FILE = '/etc/plight.conf'
 
 class NodeStatus(object):
-    def __init__(self, state_file, **kwargs):
+    def __init__(self, state_file):
         self.state_file = state_file
-        self._build_params(kwargs)
-
-    def _build_params(params):
-        for param, value in params.items():
-            setattr(self, param, value)
 
     # Operable Functions
     def set_node_disabled(self):
