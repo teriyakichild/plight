@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
-import cherrypy
-from cherrypy.process.plugins import PIDFile
-from cherrypy.process.plugins import Daemonizer
-
-import ConfigParser
-import sys
-import plight
-import signal
 import os
+import sys
+import signal
+import ConfigParser
+import BaseHTTPServer
+import SimpleHTTPServer
+from daemon import DaemonContext
+from daemon.pidlockfile import PIDLockFile
+import logging
+from logging.handlers import RotatingFileHandler
+import plight
 
 PID_FILE = '/var/run/plight.pid'
 
@@ -20,32 +22,33 @@ def get_config(config_file=plight.CONFIG_FILE):
            'port': config.getint('webserver', 'port'),
            'state_file': config.get('permanents', 'statefile'),
            'log_file': config.get('logging', 'logfile'),
-           'log_level': config.get('logging', 'loglevel')
+           'log_level': config.get('logging', 'loglevel'),
+           'log_filesize': config.getint('logging', 'filesize'),
+           'log_rotation_count': config.getint('logging', 'rotationcount')
     }
 
-def get_server_config(config=None):
-    if config is None:
-        config = get_config()
-    return {
-            'server.socket_host': config['host'],
-            'server.socket_port': config['port'],
-            'log.screen': True
-    }
+def start_server(config):
+    pidfile = PIDLockFile(PID_FILE)
+    context = DaemonContext(pidfile=pidfile)
+    context.open()
+    try:
+        logger = logging.getLogger('httpd')
+        logger.setLevel(config['log_level'])
+        if logger.handlers == []:
+            logging_handler = RotatingFileHandler(config['log_file'],
+                                                  mode='a',
+                                                  maxBytes=config['log_filesize'],
+                                                  backupCount=config['log_rotation_count'])
+            logger.addHandler(logging_handler)
 
-def _daemonize():
-    Daemonizer(cherrypy.engine).subscribe()
-    PIDFile(cherrypy.engine, PID_FILE).subscribe()
-
-def start_server(config, server_config):
-    _daemonize()
-    cherrypy.config.update(server_config)
-    cherrypy.quickstart(plight.NodeStatus(state_file=config['state_file']))
-    signal.signal(signal.SIGTERM, _shutdown_server)
-    signal.signal(signal.SIGKILL, _shutdown_server)
-
-def _shutdownp_server(signum, stack):
-    cherrypy.engine.exit()
-    sys.exit()
+        node_status = plight.NodeStatus(config['state_file'])
+        server_class = BaseHTTPServer.HTTPServer
+        http = server_class((config['host'],
+                             config['port']),
+                             plight.StatusHTTPRequestHandler)
+        http.serve_forever()
+    finally:
+        context.close()
 
 def stop_server():
     if os.path.isfile(PID_FILE):
@@ -57,7 +60,7 @@ def stop_server():
         print "no pid file available"
 
 def cli_fail():
-    sys.stderr.write('{0} [start|enable|disable]'.format(sys.argv[0]))
+    sys.stderr.write('{0} [start|enable|disable|stop]'.format(sys.argv[0]))
 
 def run():
     try:
@@ -66,13 +69,14 @@ def run():
         cli_fail()
     except AttributeError:
         cli_fail()
+
     config = get_config()
-    server_config = get_server_config(config)
+
     if mode.lower() in ['enable','disable']:
         node = plight.NodeStatus(state_file=config['state_file'])
         node.set_node_state(mode)
     elif mode.lower() == 'start':
-        start_server(config, server_config)
+        start_server(config)
     elif mode.lower() == 'stop':
         stop_server()
     else:

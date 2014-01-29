@@ -2,9 +2,12 @@
 
 %{!?__initrddir: %define __initrddir /etc/rc.d/init.d}
 
+%define rhdist %(/usr/lib/rpm/redhat/dist.sh --distnum)
+
 Name:           plight
-Version:        0.0.1
+Version:        0.0.2
 Release:        1%{?dist}
+Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
 License:        ASLv2
@@ -12,21 +15,23 @@ URL:            https://github.com/rackerlabs/plight
 Source0:        %{name}-%{version}.tar.gz
 
 BuildArch:      noarch
+BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:  python-setuptools
+BuildRequires:  redhat-rpm-config
 Requires:       python
-Requires:       python-cherrypy
+Requires:       python-daemon
 
 %define service_name %{name}d
 
-%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
 %endif
 
 %description
-PasswordSafe is a secure centralized and shareable secrets storage mechanism.
-This library allows you to interact with that 
+Plight is a lightweight daemon that can be used for load balancer
+health checks to determine if a node should be used or not.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -38,7 +43,7 @@ This library allows you to interact with that
 %install
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
-%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
     mv %{buildroot}%{__initrddir}/%{service_name}.init %{buildroot}%{__initrddir}/%{service_name}
     #TODO: Delete unit file when we have one
 %else
@@ -46,7 +51,7 @@ rm -rf $RPM_BUILD_ROOT
     rm -f %{buildroot}%{__initrddir}/%{service_name}.init
 %endif
 
-%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
 # Manage the init scripts if el5/6
 %post
 # This adds the proper /etc/rc*.d links for the script
@@ -70,10 +75,13 @@ fi
 %{python_sitelib}/%{name}*.egg-info
 %config(noreplace) %attr(0644,-,-) %{_sysconfdir}/%{name}.conf
 %attr(0755,-,-) %{_bindir}/%{name}
-%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
 %endif
 
 %changelog
+* Wed Jan 29 2014 Alex Schultz <alex.schultz@rackspce.com> - 0.0.2-1
+- CentOS/RHEL 5 support
+- Removed cherrypy, replaced with python-daemon
 * Wed Jan 22 2014 Greg Swift <gregswift@gmail.com> - 0.0.1-1
 - Initial spec

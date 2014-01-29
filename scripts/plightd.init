@@ -63,7 +63,8 @@ def unlock():
     """
     Remove the /var/lock/subsys file
     """
-    os.remove(LOCK_FILE)
+    if os.path.isfile(LOCK_FILE):
+        os.remove(LOCK_FILE)
 
 def start():
     """
@@ -72,10 +73,10 @@ def start():
     """
     print "Starting...",
     lock()
-    # do stuff
-    plight.util.start_server(config=plight.util.get_config(), server_config=plight.util.get_server_config())
-    
+    # sucess first because the daemonize stop the printing
+    # TODO: fixme
     echo_success()
+    plight.util.start_server(config=plight.util.get_config())
 
 def stop():
     """
@@ -210,7 +211,6 @@ if __name__ == '__main__':
         elif action == 'stop':
             stop()
             unlock()
-            echo_success()
             sys.exit(0)
         elif action == 'restart' or action == 'force-reload':
             restart()
