@@ -23,7 +23,6 @@ if __name__ == "__main__":
         packages = [NAME],
         package_dir = {NAME: NAME},
         description = SHORT_DESC,
-        install_requires = ['cherrypy'],
         entry_points={
             'console_scripts': [ 'plight = plight.util:run' ],
         },
