@@ -53,13 +53,6 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
           self._node_status = NodeStatus()
       return self._node_status
 
-   def set_node_status(object):
-      """Set the node status object
-
-      This will update the NodeStatus object for this object
-      """
-      self._node_status = object
-
    def version_string(self):
       """Return the version (override)
 
