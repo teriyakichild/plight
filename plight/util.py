@@ -7,7 +7,10 @@ import ConfigParser
 import BaseHTTPServer
 import SimpleHTTPServer
 from daemon import DaemonContext
-from daemon.pidlockfile import PIDLockFile
+try:
+    from daemon.pidlockfile import PIDLockFile
+except ImportError:
+    from daemon.pidfile import PIDLockFile
 import logging
 from logging.handlers import RotatingFileHandler
 import plight
