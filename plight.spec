@@ -2,7 +2,6 @@
 
 %{!?__initrddir: %define __initrddir /etc/rc.d/init.d}
 
-%define rhdist %(/usr/lib/rpm/redhat/dist.sh --distnum)
 
 Name:           plight
 Version:        0.0.2
@@ -17,13 +16,12 @@ Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:  python-setuptools
-BuildRequires:  redhat-rpm-config
 Requires:       python
 Requires:       python-daemon
 
 %define service_name %{name}d
 
-%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
@@ -43,7 +41,7 @@ health checks to determine if a node should be used or not.
 %install
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
-%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
     mv %{buildroot}%{__initrddir}/%{service_name}.init %{buildroot}%{__initrddir}/%{service_name}
     #TODO: Delete unit file when we have one
 %else
@@ -51,7 +49,7 @@ rm -rf $RPM_BUILD_ROOT
     rm -f %{buildroot}%{__initrddir}/%{service_name}.init
 %endif
 
-%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
 # Manage the init scripts if el5/6
 %post
 # This adds the proper /etc/rc*.d links for the script
@@ -75,7 +73,7 @@ fi
 %{python_sitelib}/%{name}*.egg-info
 %config(noreplace) %attr(0644,-,-) %{_sysconfdir}/%{name}.conf
 %attr(0755,-,-) %{_bindir}/%{name}
-%if 0%{?rhdist} == 5 || 0%{?rhdist} == 6
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
 %endif
 
