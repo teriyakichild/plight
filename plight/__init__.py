@@ -36,17 +36,6 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
     _applogger = None
     _node_status = None
 
-    def __init__(self, *args):
-        """initalize the object
-        The class will attempt to get a logger named plight for app
-        logs and a logger named plight_httpd for web logs. It will
-        also attempt to get an instance of NodeStatus.
-        """
-        self._weblogger = logging.getLogger('plight_httpd')
-        self._applogger = logging.getLogger('plight')
-        self._node_status = NodeStatus()
-        super(StatusHTTPRequestHandler, self).__init__(*args)
-
     def get_node_status(self):
         """Get node status object
 
@@ -55,6 +44,23 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
         if self._node_status is None:
             self._node_status = NodeStatus()
         return self._node_status
+
+    def get_web_logger(self):
+        """Get web logger
+        The function will get a logger named plight_httpd for web logs
+        """
+        if self._weblogger is None:
+           self._weblogger = logging.getLogger('plight_httpd')
+        return self._weblogger
+
+    def get_app_logger(self):
+        """Get app logger
+        The function will get a logger named plight for app logs
+        """
+        if self._applogger is None:
+           self._applogger = logging.getLogger('plight')
+        return self._applogger
+
 
     def version_string(self):
         """Return the version (override)
@@ -84,22 +90,22 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
 
         Create a request log entry for the request.
         """
-        self._weblogger.info('%s - - [%s] "%s" %s %s' %
-                             (self.address_string(),
-                              self.log_date_time_string(),
-                              self.requestline,
-                              str(code),
-                              str(size)))
+        self.get_web_logger().info('%s - - [%s] "%s" %s %s' %
+            (self.address_string(),
+            self.log_date_time_string(),
+            self.requestline,
+            str(code),
+            str(size)))
 
     def log_message(self, format, *args):
         """Log message override
 
         Overrides the default log_message function to do nothing
         """
-        self._applogger.info("%s - - [%s] %s\n" %
-                             (self.address_string(),
-                              self.log_date_time_string(),
-                              format%args))
+        self.get_app_logger().info("%s - - [%s] %s\n" %
+            (self.address_string(),
+             self.log_date_time_string(),
+             format%args))
 
 class _Singleton(type):
     """Singleton class
@@ -129,6 +135,14 @@ class NodeStatus(Singleton):
 
     def set_state_file(self, state_file=STATE_FILE):
         self.state_file = state_file
+
+    def get_app_logger(self):
+        """Get app logger
+        The function will get a logger named plight for app logs
+        """
+        if self._applogger is None:
+           self._applogger = logging.getLogger('plight')
+        return self._applogger
 
     # Operable Functions
     def set_node_disabled(self):
