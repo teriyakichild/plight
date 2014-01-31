@@ -71,8 +71,13 @@ fi
 %doc README.md
 %{python_sitelib}/%{name}
 %{python_sitelib}/%{name}*.egg-info
-%config(noreplace) %attr(0644,-,-) %{_sysconfdir}/%{name}.conf
+%config(noreplace) %attr(0644,nobody,nobody) %{_sysconfdir}/%{name}.conf
 %attr(0755,-,-) %{_bindir}/%{name}
+%dir %attr(0755,nobody,nobody) %{_localstatedir}/log/%{name}/
+%ghost %attr(0644,nobody,nobody) %{_localstatedir}/log/%{name}/access.log
+%ghost %attr(0644,nobody,nobody) %{_localstatedir}/log/%{name}/plight.log
+%dir %attr(0755,nobody,nobody) %{_localstatedir}/run/%{name}/
+%ghost %attr(0644,nobody,nobody) %{_localstatedir}/run/%{name}/%{name}.pid
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
 %endif

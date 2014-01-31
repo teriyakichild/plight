@@ -21,79 +21,85 @@ STATE_FILE = '/var/tmp/node_disabled'
 CONFIG_FILE = '/etc/plight.conf'
 
 class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
-   """Status HTTP Request handler
+    """Status HTTP Request handler
 
-   This is a class to handle a status request.  Only GET requests are valid. 
-   The handler will return 200 if the node is OK, and a 404 is the node is unavailable.
-   If any 50x errors are returned, either the request is bad or the NodeStatus
-   object may be misconfigured.
-   """
+    This is a class to handle a status request.  Only GET requests are valid. 
+    The handler will return 200 if the node is OK, and a 404 is the node is unavailable.
+    If any 50x errors are returned, either the request is bad or the NodeStatus
+    object may be misconfigured.
+    """
 
 
-   server_version = 'StatusServer'
+    server_version = 'StatusServer'
 
-   _logger = None
-   _node_status = None
+    _weblogger = None
+    _applogger = None
+    _node_status = None
 
-   def __init__(self, *args):
-       """initalize the object
-       The class will attempt to get a logger named httpd. It will
-       also attempt to get an instance of NodeStatus.
-       """
-       self._logger = logging.getLogger('httpd')
-       self._node_status = NodeStatus()
-       super(StatusHTTPRequestHandler, self).__init__(*args)
+    def __init__(self, *args):
+        """initalize the object
+        The class will attempt to get a logger named plight for app
+        logs and a logger named plight_httpd for web logs. It will
+        also attempt to get an instance of NodeStatus.
+        """
+        self._weblogger = logging.getLogger('plight_httpd')
+        self._applogger = logging.getLogger('plight')
+        self._node_status = NodeStatus()
+        super(StatusHTTPRequestHandler, self).__init__(*args)
 
-   def get_node_status(self):
-      """Get node status object
+    def get_node_status(self):
+        """Get node status object
 
-      This will return the NodeStatus object for this object
-      """
-      if self._node_status is None:
-          self._node_status = NodeStatus()
-      return self._node_status
+        This will return the NodeStatus object for this object
+        """
+        if self._node_status is None:
+            self._node_status = NodeStatus()
+        return self._node_status
 
-   def version_string(self):
-      """Return the version (override)
+    def version_string(self):
+        """Return the version (override)
 
-      This overrides the default version string to remove the version numbers
-      """
-      return self.server_version
+        This overrides the default version string to remove the version numbers
+        """
+        return self.server_version
 
-   def do_GET(self):
-      """Handle GET requests
+    def do_GET(self):
+        """Handle GET requests
 
-      This return the status of the node based on what the NodeStatus object
-      returns.
-      """
-      status = self.get_node_status()
+        This return the status of the node based on what the NodeStatus object
+        returns.
+        """
+        status = self.get_node_status()
 
-      if status is None:
-          self.send_error(code=500,message='node_status unavailable')
-      else:
-          if status.get_node_state() is 'ENABLED':
-             self.send_response(code=200)
-          else:
-             self.send_error(code=404,message='node is unavailable')
+        if status is None:
+            self.send_error(code=500,message='node_status unavailable')
+        else:
+            if status.get_node_state() is 'ENABLED':
+                self.send_response(code=200)
+            else:
+                self.send_error(code=404,message='node is unavailable')
 
-   def log_request(self, code='-', size='-'):
-      """Log the request (override)
+    def log_request(self, code='-', size='-'):
+        """Log the request (override)
 
-      Create a request log entry for the request.
-      """
-      self._logger.info('%s - - [%s] "%s" %s %s' %
-                        (self.address_string(),
-                         self.log_date_time_string(),
-                         self.requestline,
-                         str(code),
-                         str(size)))
+        Create a request log entry for the request.
+        """
+        self._weblogger.info('%s - - [%s] "%s" %s %s' %
+                             (self.address_string(),
+                              self.log_date_time_string(),
+                              self.requestline,
+                              str(code),
+                              str(size)))
 
-   def log_message(self, format, *args):
-       """Log message override
+    def log_message(self, format, *args):
+        """Log message override
 
-       Overrides the default log_message function to do nothing
-       """
-       return None
+        Overrides the default log_message function to do nothing
+        """
+        self._applogger.info("%s - - [%s] %s\n" %
+                             (self.address_string(),
+                              self.log_date_time_string(),
+                              format%args))
 
 class _Singleton(type):
     """Singleton class
@@ -115,8 +121,10 @@ class NodeStatus(Singleton):
     This class checks for the existance of a file indicating the node should
     be unavailable.
     """
+    _applogger = None
 
     def __init__(self, state_file=STATE_FILE):
+        self._applogger = logging.getLogger('plight')
         self.state_file = state_file
 
     def set_state_file(self, state_file=STATE_FILE):

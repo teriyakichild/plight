@@ -27,5 +27,7 @@ if __name__ == "__main__":
             'console_scripts': [ 'plight = plight.util:run' ],
         },
         data_files=[('/etc/rc.d/init.d', ['scripts/plightd.init']),
-                    ('/etc', ['plight.conf'])]
+                    ('/etc', ['plight.conf']),
+                    ('/var/log/plight', ['samples/access.log','samples/plight.log']),
+                    ('/var/run/plight', ['samples/plight.pid']),]
     )

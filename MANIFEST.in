@@ -1,4 +1,5 @@
 recursive-include plight *.py
 recursive-include scripts *
+recursive-include samples *
 include README.md
 include plight.conf

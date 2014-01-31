@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
 import os
+import pwd
+import grp
 import sys
+import time
 import signal
 import ConfigParser
 import BaseHTTPServer
@@ -15,7 +18,13 @@ import logging
 from logging.handlers import RotatingFileHandler
 import plight
 
-PID_FILE = '/var/run/plight.pid'
+PID_FILE = '/var/run/plight/plight.pid'
+LOG_LEVELS = { 'CRITICAL': logging.CRITICAL,
+               'ERROR': logging.ERROR,
+               'WARNING': logging.INFO,
+               'INFO': logging.INFO,
+               'DEBUG': logging.DEBUG }
+
 
 def get_config(config_file=plight.CONFIG_FILE):
     config = ConfigParser.ConfigParser()
@@ -23,6 +32,12 @@ def get_config(config_file=plight.CONFIG_FILE):
     return {
            'host': config.get('webserver', 'host'),
            'port': config.getint('webserver', 'port'),
+           'user': config.get('webserver', 'user'),
+           'group': config.get('webserver', 'group'),
+           'web_log_file': config.get('webserver', 'logfile'),
+           'web_log_level': config.get('webserver', 'loglevel'),
+           'web_log_filesize': config.getint('webserver', 'filesize'),
+           'web_log_rotation_count': config.getint('webserver', 'rotationcount'),
            'state_file': config.get('permanents', 'statefile'),
            'log_file': config.get('logging', 'logfile'),
            'log_level': config.get('logging', 'loglevel'),
@@ -31,27 +46,59 @@ def get_config(config_file=plight.CONFIG_FILE):
     }
 
 def start_server(config):
-    pidfile = PIDLockFile(PID_FILE)
-    context = DaemonContext(pidfile=pidfile)
-    context.open()
-    try:
-        logger = logging.getLogger('httpd')
-        logger.setLevel(config['log_level'])
-        if logger.handlers == []:
-            logging_handler = RotatingFileHandler(config['log_file'],
-                                                  mode='a',
-                                                  maxBytes=config['log_filesize'],
-                                                  backupCount=config['log_rotation_count'])
-            logger.addHandler(logging_handler)
+    weblogger = logging.getLogger('plight_httpd')
+    weblogger.setLevel(LOG_LEVELS[config['web_log_level']])
+    if weblogger.handlers == []:
+        weblogging_handler = RotatingFileHandler(config['web_log_file'],
+                                              mode='a',
+                                              maxBytes=config['web_log_filesize'],
+                                              backupCount=config['web_log_rotation_count'])
+        weblogger.addHandler(weblogging_handler)
 
-        node_status = plight.NodeStatus(config['state_file'])
-        server_class = BaseHTTPServer.HTTPServer
-        http = server_class((config['host'],
-                             config['port']),
-                             plight.StatusHTTPRequestHandler)
-        http.serve_forever()
+    applogger = logging.getLogger('plight')
+    applogger.setLevel(LOG_LEVELS[config['log_level']])
+    if applogger.handlers == []:
+        applogging_handler = RotatingFileHandler(config['log_file'],
+                                              mode='a',
+                                              maxBytes=config['log_filesize'],
+                                              backupCount=config['log_rotation_count'])
+        applogger.addHandler(applogging_handler)
+
+    pidfile = PIDLockFile(PID_FILE)
+    context = DaemonContext(pidfile=pidfile,
+                            uid=pwd.getpwnam(config['user']).pw_uid,
+                            gid=grp.getgrnam(config['group']).gr_gid,
+                            files_preserve = [
+                                weblogging_handler.stream,
+                                applogging_handler.stream,
+                            ],)
+    context.stdout = applogging_handler.stream
+    context.stderr = applogging_handler.stream
+    context.open()
+    os.umask(0022)
+
+    try:
+        try:
+            log_message('Plight is starting...')
+            node_status = plight.NodeStatus(config['state_file'])
+            server_class = BaseHTTPServer.HTTPServer
+            http = server_class((config['host'],
+                                 config['port']),
+                                 plight.StatusHTTPRequestHandler)
+            http.serve_forever()
+        except SystemExit, sysexit:
+            log_message("Stopping... " + str(sysexit))
+        except Exception, ex:
+            log_message("ERROR: " + str(ex))
     finally:
+        log_message('Plight has stopped...')
         context.close()
+
+def log_message(message):
+    applogger = logging.getLogger('plight')
+    applogger.info("%s %s" %
+                   (time.strftime('%c'),
+                    message))
 
 def stop_server():
     if os.path.isfile(PID_FILE):
