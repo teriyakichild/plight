@@ -2,9 +2,11 @@
 
 %{!?__initrddir: %define __initrddir /etc/rc.d/init.d}
 
+
 Name:           plight
-Version:        0.0.1
+Version:        0.0.2
 Release:        1%{?dist}
+Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
 License:        ASLv2
@@ -12,9 +14,11 @@ URL:            https://github.com/rackerlabs/plight
 Source0:        %{name}-%{version}.tar.gz
 
 BuildArch:      noarch
+BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:  python-setuptools
+Requires(pre):  shadow-utils
 Requires:       python
-Requires:       python-cherrypy
+Requires:       python-daemon
 
 %define service_name %{name}d
 
@@ -25,8 +29,8 @@ Requires(preun): initscripts
 %endif
 
 %description
-PasswordSafe is a secure centralized and shareable secrets storage mechanism.
-This library allows you to interact with that 
+Plight is a lightweight daemon that can be used for load balancer
+health checks to determine if a node should be used or not.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -34,10 +38,18 @@ This library allows you to interact with that
 
 %build
 
+%pre
+/usr/bin/getent group plight >/dev/null || /usr/sbin/groupadd -r plight
+/usr/bin/getent passwd plight >/dev/null || \
+    /usr/sbin/useradd -r -g plight -d /var/run/plight -s /sbin/nologin \
+    -c "System account for plight daemon" plight
+exit 0
 
 %install
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
+mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
+mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
     mv %{buildroot}%{__initrddir}/%{service_name}.init %{buildroot}%{__initrddir}/%{service_name}
     #TODO: Delete unit file when we have one
@@ -59,6 +71,7 @@ if [ $1 -eq 0 ] ; then
 fi
 
 %postun
+/usr/sbin/userdel plight
 if [ "$1" -ge "1" ] ; then
     /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
 fi
@@ -68,12 +81,17 @@ fi
 %doc README.md
 %{python_sitelib}/%{name}
 %{python_sitelib}/%{name}*.egg-info
-%config(noreplace) %attr(0644,-,-) %{_sysconfdir}/%{name}.conf
+%config(noreplace) %attr(0644,plight,plight) %{_sysconfdir}/%{name}.conf
 %attr(0755,-,-) %{_bindir}/%{name}
+%dir %attr(0755,plight,plight) %{_localstatedir}/log/%{name}/
+%dir %attr(0755,plight,plight) %{_localstatedir}/run/%{name}/
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
 %endif
 
 %changelog
+* Wed Jan 29 2014 Alex Schultz <alex.schultz@rackspce.com> - 0.0.2-1
+- CentOS/RHEL 5 support
+- Removed cherrypy, replaced with python-daemon
 * Wed Jan 22 2014 Greg Swift <gregswift@gmail.com> - 0.0.1-1
 - Initial spec
