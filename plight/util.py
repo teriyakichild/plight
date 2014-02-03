@@ -19,11 +19,6 @@ from logging.handlers import RotatingFileHandler
 import plight
 
 PID_FILE = '/var/run/plight/plight.pid'
-LOG_LEVELS = { 'CRITICAL': logging.CRITICAL,
-               'ERROR': logging.ERROR,
-               'WARNING': logging.INFO,
-               'INFO': logging.INFO,
-               'DEBUG': logging.DEBUG }
 
 
 def get_config(config_file=plight.CONFIG_FILE):
@@ -35,19 +30,21 @@ def get_config(config_file=plight.CONFIG_FILE):
            'user': config.get('webserver', 'user'),
            'group': config.get('webserver', 'group'),
            'web_log_file': config.get('webserver', 'logfile'),
-           'web_log_level': config.get('webserver', 'loglevel'),
+           'web_log_level': getattr(logging, 
+                                    config.get('webserver', 'loglevel')),
            'web_log_filesize': config.getint('webserver', 'filesize'),
            'web_log_rotation_count': config.getint('webserver', 'rotationcount'),
            'state_file': config.get('permanents', 'statefile'),
            'log_file': config.get('logging', 'logfile'),
-           'log_level': config.get('logging', 'loglevel'),
+           'log_level': getattr(logging,
+                                config.get('logging', 'loglevel')),
            'log_filesize': config.getint('logging', 'filesize'),
            'log_rotation_count': config.getint('logging', 'rotationcount')
     }
 
 def start_server(config):
     weblogger = logging.getLogger('plight_httpd')
-    weblogger.setLevel(LOG_LEVELS[config['web_log_level']])
+    weblogger.setLevel(config['web_log_level'])
     if weblogger.handlers == []:
         weblogging_handler = RotatingFileHandler(config['web_log_file'],
                                               mode='a',
@@ -56,7 +53,7 @@ def start_server(config):
         weblogger.addHandler(weblogging_handler)
 
     applogger = logging.getLogger('plight')
-    applogger.setLevel(LOG_LEVELS[config['log_level']])
+    applogger.setLevel(config['log_level'])
     if applogger.handlers == []:
         applogging_handler = RotatingFileHandler(config['log_file'],
                                               mode='a',

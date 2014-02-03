@@ -16,6 +16,7 @@ Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:  python-setuptools
+Requires(pre):  shadow-utils
 Requires:       python
 Requires:       python-daemon
 
@@ -37,10 +38,18 @@ health checks to determine if a node should be used or not.
 
 %build
 
+%pre
+/usr/bin/getent group plight >/dev/null || /usr/sbin/groupadd -r plight
+/usr/bin/getent passwd plight >/dev/null || \
+    /usr/sbin/useradd -r -g plight -d /var/run/plight -s /sbin/nologin \
+    -c "System account for plight daemon" plight
+exit 0
 
 %install
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
+mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
+mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
     mv %{buildroot}%{__initrddir}/%{service_name}.init %{buildroot}%{__initrddir}/%{service_name}
     #TODO: Delete unit file when we have one
@@ -62,6 +71,7 @@ if [ $1 -eq 0 ] ; then
 fi
 
 %postun
+/usr/sbin/userdel plight
 if [ "$1" -ge "1" ] ; then
     /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
 fi
@@ -71,13 +81,10 @@ fi
 %doc README.md
 %{python_sitelib}/%{name}
 %{python_sitelib}/%{name}*.egg-info
-%config(noreplace) %attr(0644,nobody,nobody) %{_sysconfdir}/%{name}.conf
+%config(noreplace) %attr(0644,plight,plight) %{_sysconfdir}/%{name}.conf
 %attr(0755,-,-) %{_bindir}/%{name}
-%dir %attr(0755,nobody,nobody) %{_localstatedir}/log/%{name}/
-%ghost %attr(0644,nobody,nobody) %{_localstatedir}/log/%{name}/access.log
-%ghost %attr(0644,nobody,nobody) %{_localstatedir}/log/%{name}/plight.log
-%dir %attr(0755,nobody,nobody) %{_localstatedir}/run/%{name}/
-%ghost %attr(0644,nobody,nobody) %{_localstatedir}/run/%{name}/%{name}.pid
+%dir %attr(0755,plight,plight) %{_localstatedir}/log/%{name}/
+%dir %attr(0755,plight,plight) %{_localstatedir}/run/%{name}/
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
 %endif

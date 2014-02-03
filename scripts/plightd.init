@@ -73,7 +73,7 @@ def start():
     """
     print "Starting...",
     lock()
-    # sucess first because the daemonize stop the printing
+    # success first because the daemonize stop the printing
     # TODO: fixme
     echo_success()
     plight.util.start_server(config=plight.util.get_config())
