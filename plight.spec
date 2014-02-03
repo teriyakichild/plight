@@ -71,7 +71,6 @@ if [ $1 -eq 0 ] ; then
 fi
 
 %postun
-/usr/sbin/userdel plight
 if [ "$1" -ge "1" ] ; then
     /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
 fi
