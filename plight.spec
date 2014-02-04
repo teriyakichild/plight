@@ -5,7 +5,7 @@
 
 Name:           plight
 Version:        0.0.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
@@ -19,6 +19,7 @@ BuildRequires:  python-setuptools
 Requires(pre):  shadow-utils
 Requires:       python
 Requires:       python-daemon
+Requires:       python-setuptools
 
 %define service_name %{name}d
 
@@ -89,6 +90,8 @@ fi
 %endif
 
 %changelog
+* Tue Feb 05 2014 Alex Schultz <alex.schultz@rackspce.com> - 0.0.2-2
+- python-setuptools is required to run the plight command
 * Wed Jan 29 2014 Alex Schultz <alex.schultz@rackspce.com> - 0.0.2-1
 - CentOS/RHEL 5 support
 - Removed cherrypy, replaced with python-daemon
