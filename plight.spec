@@ -95,8 +95,10 @@ fi
 
 * Tue Feb 05 2014 Alex Schultz <alex.schultz@rackspce.com> - 0.0.2-2
 - python-setuptools is required to run the plight command
+
 * Wed Jan 29 2014 Alex Schultz <alex.schultz@rackspce.com> - 0.0.2-1
 - CentOS/RHEL 5 support
 - Removed cherrypy, replaced with python-daemon
+
 * Wed Jan 22 2014 Greg Swift <gregswift@gmail.com> - 0.0.1-1
 - Initial spec
