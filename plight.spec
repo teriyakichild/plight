@@ -56,6 +56,7 @@ rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
 mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
+mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
 mkdir -p %{buildroot}%{_unitdir}
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
     mv %{buildroot}%{__initrddir}/%{service_name}.init %{buildroot}%{__initrddir}/%{service_name}
@@ -98,6 +99,7 @@ mkdir -p %{buildroot}%{_unitdir}
 %attr(0755,-,-) %{_bindir}/%{name}
 %dir %attr(0755,plight,plight) %{_localstatedir}/log/%{name}/
 %dir %attr(0755,plight,plight) %{_localstatedir}/run/%{name}/
+%dir %attr(0755,plight,plight) %{_localstatedir}/lib/%{name}/
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
 %else
@@ -107,6 +109,7 @@ mkdir -p %{buildroot}%{_unitdir}
 %changelog
 * Tue Mar 25 2014 Greg Swift <greg.swift@rackspce.com> - 0.0.2-4
 - Update to include systemd support
+- Support plight specific state directory
 
 * Tue Mar 25 2014 Greg Swift <greg.swift@rackspce.com> - 0.0.2-3
 - bump of release for copr build system for el5
