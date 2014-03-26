@@ -5,7 +5,7 @@
 
 Name:           plight
 Version:        0.0.2
-Release:        3%{?dist}
+Release:        4%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
@@ -27,6 +27,11 @@ Requires:       python-setuptools
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
+%else
+Requires(post): systemd
+Requires(preun): systemd
+Requires(preun): systemd
+BuildRequires: systemd
 %endif
 
 %description
@@ -51,30 +56,39 @@ rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
 mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
+mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
+mkdir -p %{buildroot}%{_unitdir}
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
     mv %{buildroot}%{__initrddir}/%{service_name}.init %{buildroot}%{__initrddir}/%{service_name}
-    #TODO: Delete unit file when we have one
+    rm -rf %{buildroot}%{_unitdir}
 %else
-    #TODO: Rename unit file
-    rm -f %{buildroot}%{__initrddir}/%{service_name}.init
+    rm -rf %{buildroot}%{__initrddir}
 %endif
 
-%if 0%{?rhel} == 5 || 0%{?rhel} == 6
-# Manage the init scripts if el5/6
 %post
-# This adds the proper /etc/rc*.d links for the script
-/sbin/chkconfig --add %{service_name}
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+  /sbin/chkconfig --add %{service_name}
+%else
+  %systemd_post %{service_name}.service
+%endif
 
 %preun
-if [ $1 -eq 0 ] ; then
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+  if [ $1 -eq 0 ] ; then
     /sbin/service %{service_name} stop >/dev/null 2>&1
     /sbin/chkconfig --del %{service_name}
-fi
+  fi
+%else
+  %systemd_preun %{service_name}.service
+%endif
 
 %postun
-if [ "$1" -ge "1" ] ; then
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+  if [ "$1" -ge "1" ] ; then
     /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
-fi
+  fi
+%else
+  %systemd_postun_with_restart %{service_name}.service
 %endif
 
 %files
@@ -85,11 +99,18 @@ fi
 %attr(0755,-,-) %{_bindir}/%{name}
 %dir %attr(0755,plight,plight) %{_localstatedir}/log/%{name}/
 %dir %attr(0755,plight,plight) %{_localstatedir}/run/%{name}/
+%dir %attr(0755,plight,plight) %{_localstatedir}/lib/%{name}/
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
+%else
+  %{_unitdir}/%{service_name}.service
 %endif
 
 %changelog
+* Tue Mar 25 2014 Greg Swift <greg.swift@rackspce.com> - 0.0.2-4
+- Update to include systemd support
+- Support plight specific state directory
+
 * Tue Mar 25 2014 Greg Swift <greg.swift@rackspce.com> - 0.0.2-3
 - bump of release for copr build system for el5
 
