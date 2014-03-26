@@ -1,11 +1,11 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 %{!?__initrddir: %define __initrddir /etc/rc.d/init.d}
-
+%{!?_unitdir: %define _unitdir /usr/lib/systemd/system}
 
 Name:           plight
 Version:        0.0.2
-Release:        4%{?dist}
+Release:        5%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
@@ -107,6 +107,9 @@ mkdir -p %{buildroot}%{_unitdir}
 %endif
 
 %changelog
+* Wed Mar 26 2014 Greg Swift <greg.swift@rackspce.com> - 0.0.2-5
+- Add default value for _unitdir for older distributions without
+
 * Tue Mar 25 2014 Greg Swift <greg.swift@rackspce.com> - 0.0.2-4
 - Update to include systemd support
 - Support plight specific state directory
