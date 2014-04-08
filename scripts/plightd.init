@@ -24,6 +24,7 @@ import plight.util
 ##### Globals #######################
 # service name, necessary paths
 SERVICE = 'plight'
+SERVICE_NAME = str(sys.argv[0]).strip().lower()
 LOCK_FILE = '/var/lock/subsys/' + SERVICE
 
 
@@ -228,7 +229,6 @@ if __name__ == '__main__':
         # calls to sys.exit() raise this error :(
         pass
     except (ValueError):
-        echo_failure()
         print >> sys.stderr, "Usage: %s [start|stop|restart|force-reload|status|test]" % (SERVICE_NAME)
         # return 2 for "bad command line option"
         sys.exit(2)
