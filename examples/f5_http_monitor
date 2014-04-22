@@ -1,0 +1,14 @@
+#Example of a simple f5 http healthcheck
+
+#Send String
+GET / HTTP/1.0\r\n
+
+#Receive String
+^HTTP/1\.0 200 OK
+
+#Receive Disable String 
+^HTTP/1\.0 404 node is unavailable
+
+#Since this service will be listening on a separate port than the service you will be applying the healthcheck make certain you also specify the Alias Service Port
+#Alias Service Port
+10101
