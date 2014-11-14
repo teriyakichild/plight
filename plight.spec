@@ -4,8 +4,8 @@
 %{!?_unitdir: %define _unitdir /usr/lib/systemd/system}
 
 Name:           plight
-Version:        0.0.2
-Release:        6%{?dist}
+Version:        0.0.3
+Release:        1%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
@@ -107,6 +107,10 @@ mkdir -p %{buildroot}%{_unitdir}
 %endif
 
 %changelog
+* Fri Nov 14 2014 Chad Wilson <chad.wilson@rackspace.com> - 0.0.3-1
+- Update init script to fix error when no parameters are passed in
+- Fixed spec email address
+
 * Tue Apr 08 2014 Alex Schultz <alex.schultz@rackspace.com> - 0.0.2-6
 - Update init script to fix error when no parameters are passed in
 - Fixed spec email address

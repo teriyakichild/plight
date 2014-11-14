@@ -3,7 +3,7 @@
 
 """
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 __license__ = 'ASLv2'
 __all__ = ['StatusHTTPRequestHandler', 'NodeStatus']
 __author__ = 'Alex Schultz'
@@ -23,7 +23,7 @@ CONFIG_FILE = '/etc/plight.conf'
 class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
     """Status HTTP Request handler
 
-    This is a class to handle a status request.  Only GET requests are valid. 
+    This is a class to handle a status request.  Only GET/HEAD requests are valid. 
     The handler will return 200 if the node is OK, and a 404 is the node is unavailable.
     If any 50x errors are returned, either the request is bad or the NodeStatus
     object may be misconfigured.
@@ -72,7 +72,7 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
     def do_GET(self):
         """Handle GET requests
 
-        This return the status of the node based on what the NodeStatus object
+        This returns the status of the node based on what the NodeStatus object
         returns.
         """
         status = self.get_node_status()
@@ -84,6 +84,14 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
                 self.send_response(code=200)
             else:
                 self.send_error(code=404,message='node is unavailable')
+
+    def do_HEAD(self):
+      """Handle HEAD requests
+
+      This returns the status of the node based on what the NodeStatus object
+      returns, but not in an unnecessarily verbose way.
+      """
+      self.do_GET()
 
     def log_request(self, code='-', size='-'):
         """Log the request (override)
