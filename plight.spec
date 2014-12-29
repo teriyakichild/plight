@@ -4,7 +4,7 @@
 %{!?_unitdir: %define _unitdir /usr/lib/systemd/system}
 
 Name:           plight
-Version:        0.0.3
+Version:        0.0.4
 Release:        1%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
@@ -65,12 +65,27 @@ mkdir -p %{buildroot}%{_unitdir}
     rm -rf %{buildroot}%{__initrddir}
 %endif
 
+
+
 %post
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
   /sbin/chkconfig --add %{service_name}
 %else
   %systemd_post %{service_name}.service
 %endif
+if [ $1 -eq 0 ] ; then
+  if [ -f /var/tmp/node_disabled ]; then
+    mv /var/lib/plight/node_disabled
+  fi
+%if 0%{?rhel} == 5 || 0%{?rhel} == 6
+  if [ "$1" -ge "1" ] ; then
+    /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
+  fi
+%else
+  %systemd_post_with_restart %{service_name}.service
+%endif
+fi
+
 
 %preun
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
@@ -107,9 +122,12 @@ mkdir -p %{buildroot}%{_unitdir}
 %endif
 
 %changelog
+* Mon Dec 29 2014 Greg Swift <greg.swift@rackspace.com> - 0.0.4.1
+- Update init script to add condrestart condition (helps upgrades from 0.0.2-4)
+- Updated spec to handle transition of node_disabled file path
+
 * Fri Nov 14 2014 Chad Wilson <chad.wilson@rackspace.com> - 0.0.3-1
-- Update init script to fix error when no parameters are passed in
-- Fixed spec email address
+- Add support for HEAD requests
 
 * Tue Apr 08 2014 Alex Schultz <alex.schultz@rackspace.com> - 0.0.2-6
 - Update init script to fix error when no parameters are passed in

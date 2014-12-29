@@ -216,6 +216,10 @@ if __name__ == '__main__':
         elif action == 'restart' or action == 'force-reload':
             restart()
             sys.exit(0)
+        elif action == 'condrestart' or action == 'try-restart':
+            if locked():
+              restart()
+              sys.exit(0)
         elif action == 'status':
             OK = status()
             sys.exit(OK)
@@ -229,7 +233,7 @@ if __name__ == '__main__':
         # calls to sys.exit() raise this error :(
         pass
     except (ValueError):
-        print >> sys.stderr, "Usage: %s [start|stop|restart|force-reload|status|test]" % (SERVICE_NAME)
+        print >> sys.stderr, "Usage: %s [start|stop|restart|force-reload|condrestart|try-restart|status|test]" % (SERVICE_NAME)
         # return 2 for "bad command line option"
         sys.exit(2)
     except:
