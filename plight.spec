@@ -122,7 +122,7 @@ fi
 %endif
 
 %changelog
-* Mon Jan  5 2014 Greg Swift <greg.swift@rackspace.com> - 0.0.4-2
+* Mon Jan  5 2015 Greg Swift <greg.swift@rackspace.com> - 0.0.4-2
 - Typo in post scriplet performing move
 
 * Mon Dec 29 2014 Greg Swift <greg.swift@rackspace.com> - 0.0.4-1
