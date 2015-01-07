@@ -5,7 +5,7 @@
 
 Name:           plight
 Version:        0.0.4
-Release:        2%{?dist}
+Release:        3%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
@@ -73,12 +73,12 @@ mkdir -p %{buildroot}%{_unitdir}
 %else
   %systemd_post %{service_name}.service
 %endif
-if [ $1 -eq 0 ] ; then
+if [ $1 -eq 2 ] ; then
   if [ -f /var/tmp/node_disabled ]; then
     mv /var/tmp/node_disabled /var/lib/plight/node_disabled
   fi
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
-  if [ "$1" -ge "1" ] ; then
+  if [ "$1" -ge "2" ] ; then
     /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
   fi
 %else
@@ -122,6 +122,9 @@ fi
 %endif
 
 %changelog
+* Wed Jan 07 2015 Chad Wilson <chad.wilson@rackspace.com> - 0.0.4-3
+- update RPM post-install scriptlet if clauses
+
 * Mon Jan  5 2015 Greg Swift <greg.swift@rackspace.com> - 0.0.4-2
 - Typo in post scriplet performing move
 
