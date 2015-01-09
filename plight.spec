@@ -5,7 +5,7 @@
 
 Name:           plight
 Version:        0.0.4
-Release:        3%{?dist}
+Release:        4%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
@@ -77,13 +77,6 @@ if [ $1 -eq 2 ] ; then
   if [ -f /var/tmp/node_disabled ]; then
     mv /var/tmp/node_disabled /var/lib/plight/node_disabled
   fi
-%if 0%{?rhel} == 5 || 0%{?rhel} == 6
-  if [ "$1" -ge "2" ] ; then
-    /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
-  fi
-%else
-  %systemd_post_with_restart %{service_name}.service
-%endif
 fi
 
 
@@ -98,13 +91,13 @@ fi
 %endif
 
 %postun
+if [ "$1" -ge "1" ] ; then
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
-  if [ "$1" -ge "1" ] ; then
-    /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
-  fi
+  /sbin/service %{service_name} condrestart >/dev/null 2>&1 || :
 %else
   %systemd_postun_with_restart %{service_name}.service
 %endif
+fi
 
 %files
 %doc README.md
@@ -122,6 +115,9 @@ fi
 %endif
 
 %changelog
+* Fri Jan 09 2015 Chad Wilson <chad.wilson@rackspace.com> - 0.0.4-4
+- leave service restart on update to postuninstall scriptlet
+
 * Wed Jan 07 2015 Chad Wilson <chad.wilson@rackspace.com> - 0.0.4-3
 - update RPM post-install scriptlet if clauses
 
