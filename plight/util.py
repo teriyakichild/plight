@@ -107,7 +107,8 @@ def stop_server():
         print "no pid file available"
 
 def cli_fail():
-    sys.stderr.write('{0} [start|enable|disable|stop]'.format(sys.argv[0]))
+    sys.stderr.write('{0} [start|enable|disable|stop]\n'.format(sys.argv[0]))
+    exit(1)
 
 def run():
     try:
