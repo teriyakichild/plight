@@ -4,8 +4,8 @@
 %{!?_unitdir: %define _unitdir /usr/lib/systemd/system}
 
 Name:           plight
-Version:        0.0.4
-Release:        4%{?dist}
+Version:        0.1.0
+Release:        1%{?dist}
 Group:          Applications/Systems
 Summary:        Load balancer agnostic node state control service
 
@@ -115,6 +115,9 @@ fi
 %endif
 
 %changelog
+* Mon Apr 06 2015 Greg Swift <greg.swift@rackspace.com> - 0.1.0-1
+- Introduce offline mode
+
 * Fri Jan 09 2015 Chad Wilson <chad.wilson@rackspace.com> - 0.0.4-4
 - leave service restart on update to postuninstall scriptlet
 
@@ -145,7 +148,7 @@ fi
 * Tue Mar 25 2014 Greg Swift <greg.swift@rackspace.com> - 0.0.2-3
 - bump of release for copr build system for el5
 
-* Tue Feb 05 2014 Alex Schultz <alex.schultz@rackspace.com> - 0.0.2-2
+* Wed Feb 05 2014 Alex Schultz <alex.schultz@rackspace.com> - 0.0.2-2
 - python-setuptools is required to run the plight command
 
 * Wed Jan 29 2014 Alex Schultz <alex.schultz@rackspace.com> - 0.0.2-1

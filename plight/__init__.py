@@ -3,7 +3,7 @@
 
 """
 
-__version__ = '0.0.4'
+__version__ = '0.1.0'
 __license__ = 'ASLv2'
 __all__ = ['StatusHTTPRequestHandler', 'NodeStatus']
 __author__ = 'Alex Schultz'
@@ -11,7 +11,7 @@ __author_email__ = 'Alex.Schultz@rackspace.com'
 
 import os
 import logging
-from logging.handlers import RotatingFileHandler
+import time
 try:
     import BaseHTTPServer
     from SimpleHTTPServer import test as http_server_test
@@ -21,7 +21,28 @@ except ImportError:
     from http.server import test as http_server_test
     from http.server import SimpleHTTPRequestHandler
 
-STATE_FILE = '/var/tmp/node_disabled'
+STATES = {
+    'enabled': {
+        'command': 'enable',
+        'file': None,
+        'code': 200,
+        'message': 'OK',
+        'priority': 0
+    },
+    'disabled': {
+        'command': 'disable',
+        'file': '/var/tmp/node_disabled',
+        'code': 404,
+        'message': 'node is unavailable',
+        'priority': 1
+    },
+    'offline': {
+        'file': '/var/tmp/node_offline',
+        'code': 503,
+        'message': 'node is offline',
+        'priority': 2
+    },
+}
 CONFIG_FILE = '/etc/plight.conf'
 
 
@@ -29,10 +50,14 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
 
     """Status HTTP Request handler
 
-    This is a class to handle a status request.  Only GET/HEAD requests are valid.
-    The handler will return 200 if the node is OK, and a 404 is the node is unavailable.
-    If any 50x errors are returned, either the request is bad or the NodeStatus
-    object may be misconfigured.
+    This is a class to handle a status request.
+    Only GET/HEAD requests are valid.
+
+    All valid responses from this handler will now come from
+    the state configuration.
+
+    If a 500 error is returned, either the request
+    is bad or the NodeStatus object may be misconfigured.
     """
 
     server_version = 'StatusServer'
@@ -52,6 +77,7 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
 
     def get_web_logger(self):
         """Get web logger
+
         The function will get a logger named plight_httpd for web logs
         """
         if self._weblogger is None:
@@ -60,6 +86,7 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
 
     def get_app_logger(self):
         """Get app logger
+
         The function will get a logger named plight for app logs
         """
         if self._applogger is None:
@@ -80,14 +107,13 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
         returns.
         """
         status = self.get_node_status()
-
         if status is None:
-            self.send_error(code=500, message='node_status unavailable')
+            self.send_error(code=500, message='node_status is unavailable')
         else:
-            if status.get_node_state() is 'ENABLED':
-                self.send_response(code=200)
-            else:
-                self.send_error(code=404, message='node is unavailable')
+            status.get_node_state()
+            code = status.get_state_detail('code')
+            message = status.get_state_detail('message')
+            self.send_response(code, message)
 
     def do_HEAD(self):
         """Handle HEAD requests
@@ -124,7 +150,8 @@ class _Singleton(type):
 
     """Singleton class
 
-    Pulled from http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+    Pulled from:
+    http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
     """
     _instances = {}
 
@@ -147,13 +174,24 @@ class NodeStatus(Singleton):
     be unavailable.
     """
     _applogger = None
+    _default_state = None
 
-    def __init__(self, state_file=STATE_FILE):
+    def __init__(self, states=STATES):
         self._applogger = logging.getLogger('plight')
-        self.state_file = state_file
+        self.states = states
+        self._commands = {}
+        for (state, state_data) in self.states.items():
+            if state_data['file'] is None:
+                if getattr(self, '_default_state') is not None:
+                    raise Exception('More than 1 state with undefined file')
+                self._default_state = state
+            self._commands[state_data.get('command', state)] = state
+        if self._default_state is None:
+            raise Exception('No default state defined')
+        self.get_node_state()
 
-    def set_state_file(self, state_file=STATE_FILE):
-        self.state_file = state_file
+    def set_state_file(self, state, state_file):
+        self.states[state]['file'] = state_file
 
     def get_app_logger(self):
         """Get app logger
@@ -164,13 +202,35 @@ class NodeStatus(Singleton):
         return self._applogger
 
     # Operable Functions
+    def _clear_state_files(self):
+        """Clear out all the active state files, resetting to default state"""
+        for (state, state_data) in self.states.items():
+            if state_data['file'] is None:
+                continue
+            if os.path.exists(state_data['file']):
+                try:
+                    os.remove(state_data['file'])
+                except OSError as e:
+                    err = "Unable to clear {} state - Error: {} - {}.".format(
+                        state, e.filename, e.strerror)
+                    self._applogger.error("{} {}".format(
+                        time.strftime('%c'), err))
+
+    def set_node_offline(self):
+        """Set the node offline
+
+        This will create a state file to be used to indicate the node
+        is purposefully offline.
+        """
+        return self.set_node_state('offline')
+
     def set_node_disabled(self):
         """Set the node disabled
 
         This will create a state file to be used to indicate the node
-        is unavailable.
+        is unavailable, primarily for maintainance mode behaviors.
         """
-        open(self.state_file, 'a').close()
+        return self.set_node_state('disable')
 
     def set_node_enabled(self):
         """Set the node enabled
@@ -178,25 +238,23 @@ class NodeStatus(Singleton):
         This will attempt to remove a state file if one exists and
         the node will now return that it is enabled.
         """
-        if os.path.exists(self.state_file):
-            try:
-                os.remove(self.state_file)
-            except OSError as e:
-                # TODO: we dont do anything with this
-                error = "Unable to enable node - Error: {} - {}.".format(
-                    e.filename, e.strerror)
-        return self.get_node_state()
+        return self.set_node_state('enable')
 
     def set_node_state(self, state):
         """Set node state
 
         This can be used to toggle the state of the node
         """
-        if state.lower() == 'enable':
-            return self.set_node_enabled()
-        elif state.lower() == 'disable':
-            return self.set_node_disabled()
-        raise Exception('Unknown state ({0}) requested'.format(state))
+        state = state.lower()
+        if state not in self.states:
+            if state in self._commands:
+                state = self._commands[state]
+            else:
+                raise Exception('Unknown state ({0}) requested'.format(state))
+        self._clear_state_files()
+        if self.states[state]['file'] is not None:
+            open(self.states[state]['file'], 'a').close()
+        return self.get_node_state()
 
     def get_node_state(self):
         """Get the node state
@@ -204,16 +262,39 @@ class NodeStatus(Singleton):
         Check if the state file exists indicating the node is disabled.
         If the file is missing, the node is enabled.
         """
-        if os.path.isfile(self.state_file):
-            current_status = 'DISABLED'
-        else:
-            current_status = 'ENABLED'
-        return current_status
+        active_states = {}
+        current_state = self._default_state
+        for (state, state_data) in self.states.items():
+            value = check_state(state_data['file'])
+            active_states[state] = value
+            if value and compare_priority(self.states, current_state, state):
+                current_state = state
+        if current_state == self._default_state:
+            active_states[current_state] = not any(active_states.values())
+        self.state = current_state
+        return current_state.upper()
+
+    def get_state_detail(self, detail, state=None):
+        if state is None:
+            if self.state is None:
+                self.get_node_state()
+            state = self.state
+        return self.states[state][detail]
+
+def compare_priority(states, state1, state2):
+    return states[state1]['priority'] < states[state2]['priority']
+
+
+def check_state(state_file):
+    if state_file is None:
+        return None
+    return os.path.isfile(state_file)
 
 
 def test(HandlerClass=StatusHTTPRequestHandler,
          ServerClass=BaseHTTPServer.HTTPServer):
-    SimpleHTTPServer.test(HandlerClass, ServerClass)
+    http_server_test(HandlerClass, ServerClass)
+
 
 if __name__ == '__main__':
     test()

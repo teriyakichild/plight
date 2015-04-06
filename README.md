@@ -1,4 +1,5 @@
 #Plight
+[![Build Status](https://travis-ci.org/rackerlabs/plight.svg?branch=master)](https://travis-ci.org/rackerlabs/plight)
 
 ## Description
 An Application and Load Balancer agnostic tool to control node availability in load balancer pools.
