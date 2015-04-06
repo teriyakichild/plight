@@ -21,7 +21,6 @@ except ImportError:
     from http.server import test as http_server_test
     from http.server import SimpleHTTPRequestHandler
 
-
 STATE_FILE = '/var/tmp/node_disabled'
 CONFIG_FILE = '/etc/plight.conf'
 

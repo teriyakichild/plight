@@ -126,6 +126,7 @@ def cli_fail():
     exit(1)
 
 
+
 def run():
     try:
         mode = sys.argv[1].lower()
