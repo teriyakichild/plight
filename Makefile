@@ -45,3 +45,6 @@ rpms: prep_rpmbuild
 
 srpm: prep_rpmbuild
 	${RPMBUILD} -bs ${PACKAGE}.spec
+
+test:
+	PYTHONPATH=$(pwd) py.test

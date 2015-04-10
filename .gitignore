@@ -5,3 +5,5 @@ rpms/
 *.egg-info
 *.pyc
 *.pyo
+.cache
+.coverage

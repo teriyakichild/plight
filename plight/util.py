@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import os
 import pwd
 import grp
 import sys
 import time
 import signal
-import ConfigParser
-import BaseHTTPServer
-import SimpleHTTPServer
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
+try:
+    import BaseHTTPServer
+except ImportError:
+    import http.server as BaseHTTPServer
 from daemon import DaemonContext
 try:
     from daemon.pidlockfile import PIDLockFile
@@ -72,7 +79,7 @@ def start_server(config):
     context.stdout = applogging_handler.stream
     context.stderr = applogging_handler.stream
     context.open()
-    os.umask(0022)
+    os.umask(0o022)
 
     try:
         try:
@@ -83,9 +90,9 @@ def start_server(config):
                                  config['port']),
                                  plight.StatusHTTPRequestHandler)
             http.serve_forever()
-        except SystemExit, sysexit:
+        except SystemExit as sysexit:
             log_message("Stopping... " + str(sysexit))
-        except Exception, ex:
+        except Exception as ex:
             log_message("ERROR: " + str(ex))
     finally:
         log_message('Plight has stopped...')
@@ -104,7 +111,7 @@ def stop_server():
         fp.close()
         os.kill(int(pid), signal.SIGTERM)
     else:
-        print "no pid file available"
+        print('no pid file available')
 
 def cli_fail():
     sys.stderr.write('{0} [start|enable|disable|stop]\n'.format(sys.argv[0]))
