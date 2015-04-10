@@ -13,9 +13,15 @@ import os
 import sys
 import logging
 from logging.handlers import RotatingFileHandler
-import BaseHTTPServer
-import SimpleHTTPServer
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+try:
+    import BaseHTTPServer
+    from SimpleHTTPServer import test as http_server_test
+    from SimpleHTTPServer import SimpleHTTPRequestHandler
+except ImportError:
+    import http.server as BaseHTTPServer
+    from http.server import test as http_server_test
+    from http.server import SimpleHTTPRequestHandler
+
 
 STATE_FILE = '/var/tmp/node_disabled'
 CONFIG_FILE = '/etc/plight.conf'
@@ -170,7 +176,7 @@ class NodeStatus(Singleton):
         if os.path.exists(self.state_file):
             try:
                 os.remove(self.state_file)
-            except OSError, e:
+            except OSError as e:
                 #TODO: we dont do anything with this
                 error = "Unable to enable node - Error: {} - {}.".format(e.filename, e.strerror)
         return self.get_node_state()
@@ -184,7 +190,7 @@ class NodeStatus(Singleton):
             return self.set_node_enabled()
         elif state.lower() == 'disable':
             return self.set_node_disabled()
-        raise Exception, 'Unknown state ({0}) requested'.format(state)
+        raise Exception('Unknown state ({0}) requested'.format(state))
 
     def get_node_state(self):
         """Get the node state
@@ -198,9 +204,9 @@ class NodeStatus(Singleton):
             current_status = 'ENABLED'
         return current_status
 
-def test(HandlerClass = StatusHTTPRequestHandler,
-         ServerClass = BaseHTTPServer.HTTPServer):
-    SimpleHTTPServer.test(HandlerClass, ServerClass)
+def test(HandlerClass=StatusHTTPRequestHandler,
+         ServerClass=BaseHTTPServer.HTTPServer):
+    http_server_test(HandlerClass, ServerClass)
 
 if __name__ == '__main__':
     test()
