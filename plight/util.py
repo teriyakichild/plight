@@ -111,7 +111,7 @@ def stop_server():
         fp.close()
         os.kill(int(pid), signal.SIGTERM)
     else:
-        print(no pid file available')
+        print('no pid file available')
 
 def cli_fail():
     sys.stderr.write('{0} [start|enable|disable|stop]\n'.format(sys.argv[0]))
