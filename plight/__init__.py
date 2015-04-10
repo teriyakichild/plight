@@ -10,7 +10,6 @@ __author__ = 'Alex Schultz'
 __author_email__ = 'Alex.Schultz@rackspace.com'
 
 import os
-import sys
 import logging
 from logging.handlers import RotatingFileHandler
 try:
@@ -26,15 +25,16 @@ except ImportError:
 STATE_FILE = '/var/tmp/node_disabled'
 CONFIG_FILE = '/etc/plight.conf'
 
-class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
+
+class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
+
     """Status HTTP Request handler
 
-    This is a class to handle a status request.  Only GET/HEAD requests are valid. 
+    This is a class to handle a status request.  Only GET/HEAD requests are valid.
     The handler will return 200 if the node is OK, and a 404 is the node is unavailable.
     If any 50x errors are returned, either the request is bad or the NodeStatus
     object may be misconfigured.
     """
-
 
     server_version = 'StatusServer'
 
@@ -56,7 +56,7 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
         The function will get a logger named plight_httpd for web logs
         """
         if self._weblogger is None:
-           self._weblogger = logging.getLogger('plight_httpd')
+            self._weblogger = logging.getLogger('plight_httpd')
         return self._weblogger
 
     def get_app_logger(self):
@@ -64,9 +64,8 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
         The function will get a logger named plight for app logs
         """
         if self._applogger is None:
-           self._applogger = logging.getLogger('plight')
+            self._applogger = logging.getLogger('plight')
         return self._applogger
-
 
     def version_string(self):
         """Return the version (override)
@@ -84,20 +83,20 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
         status = self.get_node_status()
 
         if status is None:
-            self.send_error(code=500,message='node_status unavailable')
+            self.send_error(code=500, message='node_status unavailable')
         else:
             if status.get_node_state() is 'ENABLED':
                 self.send_response(code=200)
             else:
-                self.send_error(code=404,message='node is unavailable')
+                self.send_error(code=404, message='node is unavailable')
 
     def do_HEAD(self):
-      """Handle HEAD requests
+        """Handle HEAD requests
 
-      This returns the status of the node based on what the NodeStatus object
-      returns, but not in an unnecessarily verbose way.
-      """
-      self.do_GET()
+        This returns the status of the node based on what the NodeStatus object
+        returns, but not in an unnecessarily verbose way.
+        """
+        self.do_GET()
 
     def log_request(self, code='-', size='-'):
         """Log the request (override)
@@ -105,11 +104,11 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
         Create a request log entry for the request.
         """
         self.get_web_logger().info('%s - - [%s] "%s" %s %s' %
-            (self.address_string(),
-            self.log_date_time_string(),
-            self.requestline,
-            str(code),
-            str(size)))
+                                   (self.address_string(),
+                                    self.log_date_time_string(),
+                                    self.requestline,
+                                    str(code),
+                                    str(size)))
 
     def log_message(self, format, *args):
         """Log message override
@@ -117,25 +116,32 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler,object):
         Overrides the default log_message function to do nothing
         """
         self.get_app_logger().info("%s - - [%s] %s\n" %
-            (self.address_string(),
-             self.log_date_time_string(),
-             format%args))
+                                   (self.address_string(),
+                                    self.log_date_time_string(),
+                                    format % args))
+
 
 class _Singleton(type):
+
     """Singleton class
 
     Pulled from http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
     """
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(
+                _Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
 
 class Singleton(_Singleton('SingletonMeta', (object,), {})):
     pass
 
+
 class NodeStatus(Singleton):
+
     """NodeStatus class
 
     This class checks for the existance of a file indicating the node should
@@ -155,7 +161,7 @@ class NodeStatus(Singleton):
         The function will get a logger named plight for app logs
         """
         if self._applogger is None:
-           self._applogger = logging.getLogger('plight')
+            self._applogger = logging.getLogger('plight')
         return self._applogger
 
     # Operable Functions
@@ -177,8 +183,9 @@ class NodeStatus(Singleton):
             try:
                 os.remove(self.state_file)
             except OSError as e:
-                #TODO: we dont do anything with this
-                error = "Unable to enable node - Error: {} - {}.".format(e.filename, e.strerror)
+                # TODO: we dont do anything with this
+                error = "Unable to enable node - Error: {} - {}.".format(
+                    e.filename, e.strerror)
         return self.get_node_state()
 
     def set_node_state(self, state):
@@ -204,9 +211,10 @@ class NodeStatus(Singleton):
             current_status = 'ENABLED'
         return current_status
 
+
 def test(HandlerClass=StatusHTTPRequestHandler,
          ServerClass=BaseHTTPServer.HTTPServer):
-    http_server_test(HandlerClass, ServerClass)
+    SimpleHTTPServer.test(HandlerClass, ServerClass)
 
 if __name__ == '__main__':
     test()
