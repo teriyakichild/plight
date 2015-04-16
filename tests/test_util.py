@@ -33,4 +33,10 @@ def config_file(request, tmpdir):
 
 
 def test_get_config(config_file):
-    assert util.get_config(config_file)
+    config = util.get_config(config_file)
+    assert config
+    assert config['host'] == '0.0.0.0'
+    assert config['port'] == 10101
+    assert config['web_log_file'] == '/var/log/plight/access.log'
+    assert config['log_file'] == '/var/log/plight/plight.log'
+    assert config['state_file'] == '/var/lib/plight/node_disabled'
