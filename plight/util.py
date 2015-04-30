@@ -140,6 +140,12 @@ def start_server(config, node):
         applogger.addHandler(applogging_handler)
 
     pidfile = PIDLockFile(PID_FILE)
+
+    # if pidfile is locked, do not start another process
+    if pidfile.is_locked():
+        sys.stderr.write('Plight is already running\n')
+        sys.exit(1)
+
     context = DaemonContext(pidfile=pidfile,
                             uid=pwd.getpwnam(config['user']).pw_uid,
                             gid=grp.getgrnam(config['group']).gr_gid,
