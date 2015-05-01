@@ -29,28 +29,95 @@ PID_FILE = '/var/run/plight/plight.pid'
 
 
 def get_config(config_file=plight.CONFIG_FILE):
-    config = ConfigParser.ConfigParser()
-    config.read(config_file)
-    return {
-        'host': config.get('webserver', 'host'),
-        'port': config.getint('webserver', 'port'),
-        'user': config.get('webserver', 'user'),
-        'group': config.get('webserver', 'group'),
-        'web_log_file': config.get('webserver', 'logfile'),
+    parser = ConfigParser.ConfigParser()
+    parser.read(config_file)
+    config = {
+        'host': parser.get('webserver', 'host'),
+        'port': parser.getint('webserver', 'port'),
+        'user': parser.get('webserver', 'user'),
+        'group': parser.get('webserver', 'group'),
+        'web_log_file': parser.get('webserver', 'logfile'),
         'web_log_level': getattr(logging,
-                                 config.get('webserver', 'loglevel')),
-        'web_log_filesize': config.getint('webserver', 'filesize'),
-        'web_log_rotation_count': config.getint('webserver', 'rotationcount'),
-        'state_file': config.get('permanents', 'statefile'),
-        'log_file': config.get('logging', 'logfile'),
+                                 parser.get('webserver', 'loglevel')),
+        'web_log_filesize': parser.getint('webserver', 'filesize'),
+        'web_log_rotation_count': parser.getint('webserver', 'rotationcount'),
+        'log_file': parser.get('logging', 'logfile'),
         'log_level': getattr(logging,
-                             config.get('logging', 'loglevel')),
-        'log_filesize': config.getint('logging', 'filesize'),
-        'log_rotation_count': config.getint('logging', 'rotationcount')
+                             parser.get('logging', 'loglevel')),
+        'log_filesize': parser.getint('logging', 'filesize'),
+        'log_rotation_count': parser.getint('logging', 'rotationcount')
     }
+    logger = logging.getLogger('plight')
+    logger.setLevel(config['log_level'])
+    config['states'] = process_states_from_config(parser, logger)
+    return config
 
 
-def start_server(config):
+def process_states_from_config(parser, logger):
+    # The old state_file setup was the true/false existance
+    # of state_file. If the old configuration setup is being used,
+    # we want to reproduce that behavior. The definition of
+    # state_file will act as old vs new configuration key.
+    state_file = None
+    # Load in the default states
+    states = plight.STATES
+    try:
+        state_file = parser.get('permanents', 'statefile')
+    except ConfigParser.NoSectionError:
+        pass
+    if state_file is not None:
+        logger.warn('Permanents section is deprecated, see release notes')
+        states['disabled']['file'] = state_file
+        states['disabled']['old_config'] = True
+        del states['offline']
+    if 'old_config' not in states['disabled']:
+        # We are on the new config.  Valid states are pulled
+        # from the defined priorities.states, which should be ordered
+        # from lowest to highest priority.
+        err = None
+        try:
+            priorities = parser.get('priorities', 'states').split(',')
+        except ConfigParser.NoSectionError:
+            err = 'No priorities section defined in config file'
+        except ConfigParser.NoOptionError:
+            err = 'Missing states option in priorities section of config file'
+        finally:
+            if err:
+                logger.error(err)
+                raise Exception(err)
+        # Based on the defined priorties we want to remove unused states
+        keep_states = {}
+        for state in states:
+            if state in priorities:
+                keep_states[state] = states[state]
+        states = keep_states
+        # Now we want to loop through the requested states
+        for state in priorities:
+            # Error if values aren't provided
+            if not parser.has_section(state) and state not in states:
+                err = 'Priorities contains undefined state {0}'.format(state)
+                logger.error(err)
+                raise Exception(err)
+            if state not in states:
+                states[state] = {'priority': priorities.index(state)}
+            for option in plight.STATES['enabled']:
+                try:
+                    states[state][option] = parser.get(state, option)
+                except ConfigParser.NoOptionError:
+                    if option in ['command', 'priority']:
+                        continue
+                    if option == 'file':
+                        states[state][option] = None
+                        continue
+                    raise
+                try:
+                    states[state][option] = int(states[state][option])
+                except ValueError:
+                    pass
+    return states
+
+
+def start_server(config, node):
     weblogger = logging.getLogger('plight_httpd')
     weblogger.setLevel(config['web_log_level'])
     if weblogger.handlers == []:
@@ -65,15 +132,20 @@ def start_server(config):
     applogger = logging.getLogger('plight')
     applogger.setLevel(config['log_level'])
     if applogger.handlers == []:
-        applogging_handler = RotatingFileHandler(config['log_file'],
-                                                 mode='a',
-                                                 maxBytes=config[
-                                                      'log_filesize'],
-                                                 backupCount=config[
-                                                      'log_rotation_count'])
+        applogging_handler = RotatingFileHandler(
+            config['log_file'],
+            mode='a',
+            maxBytes=config['log_filesize'],
+            backupCount=config['log_rotation_count'])
         applogger.addHandler(applogging_handler)
 
     pidfile = PIDLockFile(PID_FILE)
+
+    # if pidfile is locked, do not start another process
+    if pidfile.is_locked():
+        sys.stderr.write('Plight is already running\n')
+        sys.exit(1)
+
     context = DaemonContext(pidfile=pidfile,
                             uid=pwd.getpwnam(config['user']).pw_uid,
                             gid=grp.getgrnam(config['group']).gr_gid,
@@ -89,7 +161,6 @@ def start_server(config):
     try:
         try:
             log_message('Plight is starting...')
-            node_status = plight.NodeStatus(config['state_file'])
             server_class = BaseHTTPServer.HTTPServer
             http = server_class((config['host'],
                                  config['port']),
@@ -121,27 +192,29 @@ def stop_server():
         print('no pid file available')
 
 
-def cli_fail():
-    sys.stderr.write('{0} [start|enable|disable|stop]\n'.format(sys.argv[0]))
+def cli_fail(commands):
+    fail_msg = '{0} [start|{1}|stop]\n'
+    commands = "|".join(commands)
+    sys.stderr.write(fail_msg.format(sys.argv[0], commands))
     exit(1)
 
 
 def run():
+    config = get_config()
+    node = plight.NodeStatus(states=config['states'])
+
     try:
         mode = sys.argv[1].lower()
     except IndexError:
-        cli_fail()
+        cli_fail(node._commands)
     except AttributeError:
-        cli_fail()
+        cli_fail(node._commands)
 
-    config = get_config()
-
-    if mode.lower() in ['enable', 'disable']:
-        node = plight.NodeStatus(state_file=config['state_file'])
+    if mode in node._commands:
         node.set_node_state(mode)
-    elif mode.lower() == 'start':
-        start_server(config)
-    elif mode.lower() == 'stop':
+    elif mode == 'start':
+        start_server(config, node)
+    elif mode == 'stop':
         stop_server()
     else:
-        cli_fail()
+        cli_fail(node._commands)
