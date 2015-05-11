@@ -47,6 +47,9 @@ systemctl enable plightd
 systemctl start plightd
 ```
 
+### Firewall
+The default port configured for plight is ```10101```. In our examples directory there is a service entry for firewalld.
+
 ### States
 By default Plight comes with 3 explicit states, which as of the 0.1.0 series are configurable in ```plight.conf```.
 
