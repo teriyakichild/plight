@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>plight</short>
+  <description>Plight node availability web service</description>
+  <port protocol="tcp" port="10101"/>
+</service>

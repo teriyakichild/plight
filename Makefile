@@ -1,27 +1,62 @@
+#SERIAL 201411242120
+
+# Base the name of the software on the spec file
 PACKAGE := $(shell basename *.spec .spec)
+# Override this arch if the software is arch specific
 ARCH = noarch
-RPMBUILD = rpmbuild --define "_topdir %(pwd)/rpm-build" \
-	--define "_builddir %{_topdir}" \
-	--define "_rpmdir %(pwd)/rpms" \
+
+# Variables for clean build directory tree under repository
+BUILDDIR = ./build
+ARTIFACTDIR = ./artifacts
+SDISTDIR = ${ARTIFACTDIR}/sdist
+RPMBUILDDIR = ${BUILDDIR}/rpm-build
+RPMDIR = ${ARTIFACTDIR}/rpms
+DEBBUILDDIR = ${BUILDDIR}/deb-build
+DEBDIR = ${ARTIFACTDIR}/debs
+
+# base rpmbuild command that utilizes the local buildroot
+# not using the above variables on purpose.
+# if you can make it work, PRs are welcome!
+RPMBUILD = rpmbuild --define "_topdir %(pwd)/build" \
+	--define "_sourcedir  %(pwd)/artifacts/sdist" \
+	--define "_builddir %{_topdir}/rpm-build" \
 	--define "_srcrpmdir %{_rpmdir}" \
-	--define "_sourcedir  %{_topdir}"
-PYTHON = $(which python)
+	--define "_rpmdir %(pwd)/artifacts/rpms"
+
+# Allow which python to be overridden at the environment level
+PYTHON := $(shell which python)
+
+ifneq ("$(wildcard setup.py)","")
+GET_SDIST = ${PYTHON} setup.py sdist -d "${SDISTDIR}"
+else
+GET_SDIST = spectool -g -C ${SDISTDIR} ${PACKAGE}.spec
+endif
 
 all: rpms
 
 clean:
-	rm -rf dist/ build/ rpm-build/ rpms/
-	rm -rf docs/*.gz MANIFEST *~ *.egg-info
+	rm -rf ${BUILDDIR}/ *~
+	rm -rf docs/*.gz
+	rm -rf *.egg-info
 	find . -name '*.pyc' -exec rm -f {} \;
 
-#manpage:
-#	gzip -c docs/${PACKAGE}.1 > docs/${PACKAGE}.1.gz
+clean_all: clean
+	rm -rf ${ARTIFACTDIR}/
 
-build: clean
-	python setup.py build -f
+manpage:
+	-gzip -c docs/${PACKAGE}.1 > docs/${PACKAGE}.1.gz
+
+test:
+	PYTHONPATH=$(pwd) py.test
+
+build: clean manpage
+	${PYTHON} setup.py build -f
 
 install: build
-	python setup.py install -f
+	${PYTHON} setup.py install -f --root ${DESTDIR}
+
+install_rpms: rpms
+	yum install ${RPMDIR}/${ARCH}/${PACKAGE}*.${ARCH}.rpm
 
 reinstall: uninstall install
 
@@ -33,12 +68,13 @@ uninstall_rpms: clean
 	rpm -e ${PACKAGE}
 
 sdist:
-	python setup.py sdist
+	mkdir -p ${SDISTDIR}
+	${GET_SDIST}
 
-prep_rpmbuild: build sdist
-	mkdir -p rpm-build
-	mkdir -p rpms
-	cp dist/*.gz rpm-build/
+prep_rpmbuild: prep_build
+	mkdir -p ${RPMBUILDDIR}
+	mkdir -p ${RPMDIR}
+	cp ${SDISTDIR}/*gz ${RPMBUILDDIR}/
 
 rpms: prep_rpmbuild
 	${RPMBUILD} -ba ${PACKAGE}.spec
@@ -46,5 +82,25 @@ rpms: prep_rpmbuild
 srpm: prep_rpmbuild
 	${RPMBUILD} -bs ${PACKAGE}.spec
 
-test:
-	PYTHONPATH=$(pwd) py.test
+prep_build: manpage sdist
+	mkdir -p ${BUILDDIR}
+
+prep_debbuild: prep_build
+	mkdir -p ${DEBBUILDDIR}
+	mkdir -p ${DEBDIR}
+	SDISTPACKAGE=`ls ${SDISTDIR}`; \
+	BASE=`basename $$SDISTPACKAGE .tar.gz`; \
+	DEBBASE=`echo $$BASE | sed 's/-/_/'`; \
+	TARGET=${DEBBUILDDIR}/$$DEBBASE.orig.tar.gz; \
+	ln -f -s ../../${SDISTDIR}/$$SDISTPACKAGE $$TARGET; \
+	tar -xz -f $$TARGET -C ${DEBBUILDDIR}; \
+	rm -rf ${DEBBUILDDIR}/$$BASE/debian; \
+	cp -pr debian/ ${DEBBUILDDIR}/$$BASE
+
+debs: prep_debbuild
+	SDISTPACKAGE=`ls ${SDISTDIR}`; \
+	BASE=`basename $$SDISTPACKAGE .tar.gz`; \
+	cd ${DEBBUILDDIR}/$$BASE; \
+	debuild -uc -us
+	mv ${DEBBUILDDIR}/*.deb ${DEBDIR}/
+
