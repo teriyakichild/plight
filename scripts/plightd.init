@@ -70,12 +70,23 @@ def unlock():
     if os.path.isfile(LOCK_FILE):
         os.remove(LOCK_FILE)
 
+def verify_pid_dir():
+    pid_dir = os.path.dirname(plight.util.PID_FILE)
+    if not os.path.exists(pid_dir):
+        import pwd
+        import grp
+        uid = pwd.getpwnam('plight').pw_uid
+        gid = grp.getgrnam('plight').gr_gid
+        os.mkdir(pid_dir, 0755)
+        os.chown(pid_dir, uid, gid)
+
 def start():
     """
     Do whatever needs to be done.. this is where you start any applications,
     mount filesystems, etc.
     """
     print('Starting...', end='')
+    verify_pid_dir()
     lock()
     # success first because the daemonize stop the printing
     # TODO: fixme

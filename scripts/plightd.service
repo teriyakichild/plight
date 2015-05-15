@@ -5,7 +5,10 @@ After=network.target
 [Service]
 User=plight
 Group=plight
-PIDFile=/var/run/plight.pid
+PIDFile=/var/run/plight/plight.pid
+PermissionsStartOnly=true
+ExecStartPre=-/usr/bin/mkdir /var/run/plight
+ExecStartPre=/usr/bin/chown -R plight:plight /var/run/plight
 ExecStart=/usr/bin/plight start
 ExecStop=/usr/bin/plight stop
 
