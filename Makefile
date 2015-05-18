@@ -9,6 +9,7 @@ ARCH = noarch
 BUILDDIR = ./build
 ARTIFACTDIR = ./artifacts
 SDISTDIR = ${ARTIFACTDIR}/sdist
+WHEELDIR = ${ARTIFACTDIR}/wheels
 RPMBUILDDIR = ${BUILDDIR}/rpm-build
 RPMDIR = ${ARTIFACTDIR}/rpms
 DEBBUILDDIR = ${BUILDDIR}/deb-build
@@ -70,6 +71,10 @@ uninstall_rpms: clean
 sdist:
 	mkdir -p ${SDISTDIR}
 	${GET_SDIST}
+
+wheel:
+	mkdir -p ${WHEELDIR}
+	${PYTHON} setup.py bdist_wheel -d "${WHEELDIR}"
 
 prep_rpmbuild: prep_build
 	mkdir -p ${RPMBUILDDIR}
