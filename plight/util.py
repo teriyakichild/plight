@@ -211,6 +211,7 @@ def run():
         cli_fail(node._commands)
 
     if mode in node._commands:
+        log_message('Changing state to {0}'.format(mode))
         node.set_node_state(mode)
     elif mode == 'start':
         start_server(config)

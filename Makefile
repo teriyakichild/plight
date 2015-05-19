@@ -1,4 +1,4 @@
-#SERIAL 201411242120
+#SERIAL 201505190030
 
 # Base the name of the software on the spec file
 PACKAGE := $(shell basename *.spec .spec)
