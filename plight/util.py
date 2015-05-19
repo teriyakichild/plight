@@ -192,8 +192,24 @@ def stop_server():
         print('no pid file available')
 
 
+def format_get_current_state(state, details):
+    message = 'State: {0}\nCode: {1}\nMessage: {2}\n'
+    sys.stdout.write(message.format(state, details['code'], details['message']))
+
+
+def format_list_states(default, states):
+    for state, details in states.items():
+        message_modifier = ''
+        if state == default:
+            message_modifier = ' [default]'
+        message = 'State: {0}{1}\nCode: {2}\nMessage: {3}\n\n'
+        sys.stdout.write(
+            message.format(
+                state, message_modifier, details['code'], details['message']))
+
+
 def cli_fail(commands):
-    fail_msg = '{0} [start|{1}|stop]\n'
+    fail_msg = '{0} [start|{1}|list-states|status|stop]\n'
     commands = "|".join(commands)
     sys.stderr.write(fail_msg.format(sys.argv[0], commands))
     exit(1)
@@ -209,12 +225,15 @@ def run():
         cli_fail(node._commands)
     except AttributeError:
         cli_fail(node._commands)
-
     if mode in node._commands:
         log_message('Changing state to {0}'.format(mode))
         node.set_node_state(mode)
     elif mode == 'start':
         start_server(config)
+    elif mode == 'status':
+        format_get_current_state(node.state, config['states'][node.state])
+    elif mode == 'list-states':
+        format_list_states(node._default_state, config['states'])
     elif mode == 'stop':
         stop_server()
     else:
