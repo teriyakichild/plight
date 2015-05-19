@@ -69,7 +69,7 @@ def process_states_from_config(parser, logger):
         logger.warn('Permanents section is deprecated, see release notes')
         states['disabled']['file'] = state_file
         states['disabled']['old_config'] = True
-        del states['offline']
+        states.pop('offline', None)
     if 'old_config' not in states['disabled']:
         # We are on the new config.  Valid states are pulled
         # from the defined priorities.states, which should be ordered
