@@ -194,7 +194,8 @@ def stop_server():
 
 def format_get_current_state(state, details):
     message = 'State: {0}\nCode: {1}\nMessage: {2}\n'
-    sys.stdout.write(message.format(state, details['code'], details['message']))
+    sys.stdout.write(
+        message.format(state, details['code'], details['message']))
 
 
 def format_list_states(default, states):
