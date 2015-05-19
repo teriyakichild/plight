@@ -1,13 +1,13 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
-%{!?__initrddir: %define __initrddir /etc/rc.d/init.d}
+%{!?__initddir: %define __initddir /etc/rc.d/init.d}
 %{!?_unitdir: %define _unitdir /usr/lib/systemd/system}
 
 Name:           plight
-Version:        0.1.0
-Release:        1%{?dist}
+Version:        0.1.1
+Release:        2%{?dist}
 Group:          Applications/Systems
-Summary:        Load balancer agnostic node state control service
+Summary:        Application agnostic tool to represent node availability.
 
 License:        ASLv2
 URL:            https://github.com/rackerlabs/plight
@@ -35,8 +35,11 @@ BuildRequires: systemd
 %endif
 
 %description
-Plight is a lightweight daemon that can be used for load balancer
-health checks to determine if a node should be used or not.
+Plight is a lightweight daemon providing a state machine to be
+used for determining the active functionality of a machine. Such
+as "in rotation" (enabled) or "in maintenance" (disabled).
+The states are also configurable.
+
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -47,7 +50,7 @@ health checks to determine if a node should be used or not.
 %pre
 /usr/bin/getent group plight >/dev/null || /usr/sbin/groupadd -r plight
 /usr/bin/getent passwd plight >/dev/null || \
-    /usr/sbin/useradd -r -g plight -d /var/run/plight -s /sbin/nologin \
+    /usr/sbin/useradd -r -g plight -d /var/lib/plight -s /sbin/nologin \
     -c "System account for plight daemon" plight
 exit 0
 
@@ -55,14 +58,14 @@ exit 0
 rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
 mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
-mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
+mkdir -p %{buildroot}%{_initddir}
 mkdir -p %{buildroot}%{_unitdir}
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
-    mv %{buildroot}%{__initrddir}/%{service_name}.init %{buildroot}%{__initrddir}/%{service_name}
+    mv %{buildroot}/etc/init.d/%{service_name}.init %{buildroot}%{__initddir}/%{service_name}
     rm -rf %{buildroot}%{_unitdir}
 %else
-    rm -rf %{buildroot}%{__initrddir}
+    rm -rf %{buildroot}/etc/init.d
 %endif
 
 
@@ -106,7 +109,7 @@ fi
 %config(noreplace) %attr(0644,plight,plight) %{_sysconfdir}/%{name}.conf
 %attr(0755,-,-) %{_bindir}/%{name}
 %dir %attr(0755,plight,plight) %{_localstatedir}/log/%{name}/
-%dir %attr(0755,plight,plight) %{_localstatedir}/run/%{name}/
+%ghost %dir %attr(0755,plight,plight) %{_localstatedir}/run/%{name}/
 %dir %attr(0755,plight,plight) %{_localstatedir}/lib/%{name}/
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
   %attr(0755,-,-) %{_initrddir}/%{service_name}
@@ -115,6 +118,13 @@ fi
 %endif
 
 %changelog
+* Fri May 29 2015 Greg Swift <greg.swift@rackspace.com> - 0.1.1-1
+- Updates to syncronize with new debian package
+- Use /var/lib/plight as home, not /var/run - old users will have to manually deal
+
+* Tue May 19 2015 Greg Swift <greg.swift@rackspace.com> - 0.1.0-2
+- Handle init script different to better suport debian in the project
+
 * Mon Apr 06 2015 Greg Swift <greg.swift@rackspace.com> - 0.1.0-1
 - Introduce offline mode
 

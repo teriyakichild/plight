@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+%:
+	dh $@ --with python2 --buildsystem=python_distutils
+
+override_dh_installinit:
+	dh_installinit --onlyscripts --name="plightd"
+	mv debian/plight/etc/init.d/plightd.init debian/plight/etc/init.d/plightd

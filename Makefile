@@ -24,6 +24,11 @@ RPMBUILD = rpmbuild --define "_topdir %(pwd)/build" \
 	--define "_srcrpmdir %{_rpmdir}" \
 	--define "_rpmdir %(pwd)/artifacts/rpms"
 
+DEBBUILD = SDISTPACKAGE=`ls ${SDISTDIR}`; \
+	BASE=`basename $$SDISTPACKAGE .tar.gz`; \
+	cd ${DEBBUILDDIR}/$$BASE; \
+	debuild -uc -us
+
 # Allow which python to be overridden at the environment level
 PYTHON := $(shell which python)
 
@@ -54,7 +59,10 @@ build: clean manpage
 	${PYTHON} setup.py build -f
 
 install: build
+	install -m 0755 -o plight -g plight -d ${DESTDIR}/var/lib/${PACKAGE}
+	install -m 0755 -o plight -g plight -d ${DESTDIR}/var/log/${PACKAGE}
 	${PYTHON} setup.py install -f --root ${DESTDIR}
+	mv ${DESTDIR}/etc/init.d/plightd.init ${DESTDIR}/etc/init.d/plightd
 
 install_rpms: rpms
 	yum install ${RPMDIR}/${ARCH}/${PACKAGE}*.${ARCH}.rpm
@@ -62,8 +70,13 @@ install_rpms: rpms
 reinstall: uninstall install
 
 uninstall: clean
-	rm -f /usr/bin/${PACKAGE}
-	rm -rf /usr/lib/python*/site-packages/${PACKAGE}
+	rm -f ${DESTDIR}/etc/${PACKAGE}.conf
+	rm -f ${DESTDIR}/etc/init.d/${PACKAGE}d
+	rm -f ${DESTDIR}/usr/lib/systemd/system/${PACKAGE}d.service
+	rm -f ${DESTDIR}/usr/bin/${PACKAGE}
+	rm -rf ${DESTDIR}/var/lib/${PACKAGE}
+	rm -rf ${DESTDIR}/var/log/${PACKAGE}
+	rm -rf ${DESTDIR}/usr/lib/python*/site-packages/${PACKAGE}*
 
 uninstall_rpms: clean
 	rpm -e ${PACKAGE}
@@ -103,9 +116,13 @@ prep_debbuild: prep_build
 	cp -pr debian/ ${DEBBUILDDIR}/$$BASE
 
 debs: prep_debbuild
-	SDISTPACKAGE=`ls ${SDISTDIR}`; \
-	BASE=`basename $$SDISTPACKAGE .tar.gz`; \
-	cd ${DEBBUILDDIR}/$$BASE; \
-	debuild -uc -us
+	${DEBBUILD}
 	mv ${DEBBUILDDIR}/*.deb ${DEBDIR}/
+	mv ${DEBBUILDDIR}/*.dsc ${DEBDIR}/
+	mv ${DEBBUILDDIR}/*.gz ${DEBDIR}/
+
+debsrc: prep_debbuild
+	${DEBBUILD} -S
+	mv ${DEBBUILDDIR}/*.dsc ${DEBDIR}/
+	mv ${DEBBUILDDIR}/*.gz ${DEBDIR}/
 

@@ -1,0 +1,12 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Plight
+Source: https://github.com/rackerlabs/plight.git
+
+Files: *
+Copyright: 2015 Greg Swift
+License: ASL-2
+ [LICENSE TEXT]
+ .
+ On Debian systems, the full text of the Apache Software
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/Apache-2'.

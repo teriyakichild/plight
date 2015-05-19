@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     with open('requirements.txt') as f:
         required_pkgs = f.read().splitlines()
- 
+
     setup(
         name = NAME,
         version = __version__,
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         entry_points={
             'console_scripts': [ 'plight = plight.util:run' ],
         },
-        data_files=[('/etc/rc.d/init.d', ['scripts/plightd.init']),
+        data_files=[('/etc/init.d', ['scripts/plightd.init']),
                     ('/usr/lib/systemd/system', ['scripts/plightd.service']),
                     ('/etc', ['plight.conf']),],
         install_requires = required_pkgs

@@ -3,3 +3,4 @@ recursive-include scripts *
 recursive-include samples *
 include README.md
 include plight.conf
+include requirements.txt
