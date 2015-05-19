@@ -117,7 +117,7 @@ def process_states_from_config(parser, logger):
     return states
 
 
-def start_server(config, node):
+def start_server(config):
     weblogger = logging.getLogger('plight_httpd')
     weblogger.setLevel(config['web_log_level'])
     if weblogger.handlers == []:
@@ -213,7 +213,7 @@ def run():
     if mode in node._commands:
         node.set_node_state(mode)
     elif mode == 'start':
-        start_server(config, node)
+        start_server(config)
     elif mode == 'stop':
         stop_server()
     else:

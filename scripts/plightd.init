@@ -28,8 +28,14 @@ import plight.util
 # service name, necessary paths
 SERVICE = 'plight'
 SERVICE_NAME = str(sys.argv[0]).strip().lower()
-LOCK_FILE = '/var/lock/subsys/' + SERVICE
 
+# Because RH and other distributions use different directories
+# for sysvinit locking states we try and decipher that here
+LOCK_DIR = '/var/lock'
+RH_LOCK_DIR = os.path.join(LOCK_DIR, 'subsys')
+if os.path.isdir(RH_LOCK_DIR):
+    LOCK_DIR = RH_LOCK_DIR
+LOCK_FILE = os.path.join(LOCK_DIR, SERVICE)
 
 # ANSI codes
 MOVE_CURSOR = '\033[60G'
@@ -70,12 +76,28 @@ def unlock():
     if os.path.isfile(LOCK_FILE):
         os.remove(LOCK_FILE)
 
+def verify_pid_dir():
+    pid_dir = os.path.dirname(plight.util.PID_FILE)
+    if not os.path.exists(pid_dir):
+        import pwd
+        import grp
+        uid = pwd.getpwnam('plight').pw_uid
+        gid = grp.getgrnam('plight').gr_gid
+        os.mkdir(pid_dir, 0755)
+        os.chown(pid_dir, uid, gid)
+
 def start():
     """
     Do whatever needs to be done.. this is where you start any applications,
     mount filesystems, etc.
     """
     print('Starting...', end='')
+    try:
+        verify_pid_dir()
+    except:
+        echo_failure()
+        sys.stderr.write('Verify that {0} exists and is owned by plight\n'.format(
+            os.path.dirname(plight.util.PID_FILE)))
     lock()
     # success first because the daemonize stop the printing
     # TODO: fixme
