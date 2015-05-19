@@ -147,3 +147,30 @@ def test_get_config(config_file):
         assert state['file'] == '/var/lib/plight/node_slave'
         assert state['code'] == 200
         assert state['priority'] == 1
+
+def test_format_list_states(capsys, config_file):
+    config = util.get_config(config_file)
+    states = config['states']
+    check = ''
+    for state, details in states.items():
+        if details['file'] is None:
+            message_modifier = ' [default]'
+        else:
+            message_modifier = ''
+        check += 'State: {0}{1}\nCode: {2}\nMessage: {3}\n\n'.format(
+            state, message_modifier, details['code'], details['message'])
+
+    util.format_list_states('enabled', config['states'])
+    out, err = capsys.readouterr()
+    assert out == check
+
+def test_format_get_current_state(capsys, config_file):
+    config = util.get_config(config_file)
+    states = config['states']
+    check = ''
+    for state, details in states.items():
+        message = 'State: {0}\nCode: {1}\nMessage: {2}\n'
+        check = message.format(state, details['code'], details['message'])
+        util.format_get_current_state(state, details)
+        out, err = capsys.readouterr()
+        assert out == check

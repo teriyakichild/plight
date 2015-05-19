@@ -101,7 +101,12 @@ configured states.
 #### Return a node to active mode
 ```plight enable```
 
+#### List the configured states
+```plight list-states```
+
 #### Checking the current state of a node
+```plight status```  
+      or  
 ```curl http://localhost:10101 -D -```
 
 ## Licensing
