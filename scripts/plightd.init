@@ -86,7 +86,12 @@ def start():
     mount filesystems, etc.
     """
     print('Starting...', end='')
-    verify_pid_dir()
+    try:
+        verify_pid_dir()
+    except:
+        echo_failure()
+        sys.stderr.write('Verify that {0} exists and is owned by plight\n'.format(
+            os.path.dirname(plight.util.PID_FILE)))
     lock()
     # success first because the daemonize stop the printing
     # TODO: fixme
