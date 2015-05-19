@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 from setuptools import setup
 
 import sys
@@ -12,6 +13,9 @@ SHORT_DESC = "Application and Load Balancer agnostic status tool"
 
 
 if __name__ == "__main__":
+
+    with open('requirements.txt') as f:
+        required_pkgs = f.read().splitlines()
  
     setup(
         name = NAME,
@@ -28,5 +32,6 @@ if __name__ == "__main__":
         },
         data_files=[('/etc/rc.d/init.d', ['scripts/plightd.init']),
                     ('/usr/lib/systemd/system', ['scripts/plightd.service']),
-                    ('/etc', ['plight.conf']),]
+                    ('/etc', ['plight.conf']),],
+        install_requires = required_pkgs
     )
