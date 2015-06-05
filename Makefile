@@ -123,6 +123,8 @@ debs: prep_debbuild
 
 debsrc: prep_debbuild
 	${DEBBUILD} -S
+	mv ${DEBBUILDDIR}/*.build ${DEBDIR}/
+	mv ${DEBBUILDDIR}/*.changes ${DEBDIR}/
 	mv ${DEBBUILDDIR}/*.dsc ${DEBDIR}/
 	mv ${DEBBUILDDIR}/*.gz ${DEBDIR}/
 

@@ -1,7 +1,7 @@
 Source: plight
 Maintainer: Greg Swift <greg.swift@rackspace.com>
 Section: misc
-Build-Depends: python-all (>= 2.6.6-3), debhelper (>= 9)
+Build-Depends: python-all (>= 2.6.6-3), python-setuptools, debhelper (>= 9)
 Priority: optional
 Standards-Version: 3.9.3
 
