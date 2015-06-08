@@ -1,0 +1,21 @@
+#!/bin/sh -e
+
+case "$1" in
+    install)
+    adduser --system --group --no-create-home --home /var/lib/plight --quiet plight || true
+    ;;
+
+    upgrade)
+    usermod -d /var/lib/plight plight || true
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+    echo "preinst called with unknown argument \`$1'" >&2
+    exit 1
+    ;;
+esac
+
+#DEBHELPER#

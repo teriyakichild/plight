@@ -1,0 +1,15 @@
+Source: plight
+Maintainer: Greg Swift <greg.swift@rackspace.com>
+Section: misc
+Build-Depends: python-all (>= 2.6.6-3), python-setuptools, debhelper (>= 9)
+Priority: optional
+Standards-Version: 3.9.3
+
+Package: plight
+Description: Application agnostic tool to represent node availability.
+ Plight is a lightweight daemon providing a state machine to be
+ used for determining the active functionality of a machine. Such
+ as "in rotation" (enabled) or "in maintenance" (disabled).
+ The states are also configurable.
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, python-daemon (>=1.5)

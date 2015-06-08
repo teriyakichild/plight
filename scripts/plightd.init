@@ -1,21 +1,24 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Init script skeleton for Python-based service control scripts
 #
-# chkconfig: 123456 1 99
-# description: My service
+# chkconfig: - 30 70
+# description: Plight daemon is a node state machine
 #
-# Author: Josh Johnson <lionface dot lemonface at gmail dot com>
+# Original Author: Josh Johnson <lionface dot lemonface at gmail dot com>
 #
 #
 ### BEGIN INIT INFO
-# Provides: my-service
-# Required-Start:
-# Required-Stop:
-# Default-Start:  123456
-# Default-Stop:  123456
-# Short-Description: My service
-# Description: My service
+# Provides: plight
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs $syslog
+# Default-Start:  2 3 4 5
+# Default-Stop:  1 6
+# Short-Description: Plight state machine
+# Description: Plight is a lightweight daemon providing a state machine to be
+#     used for determining the active functionality of a machine. Such
+#     as "in rotation" (enabled) or "in maintenance" (disabled).
+#     The states are also configurable.
 ### END INIT INFO
 
 from __future__ import print_function

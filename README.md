@@ -113,4 +113,40 @@ configured states.
 All files contained with this distribution are licenced either under the [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0) or the [GNU General Public License v2.0](http://www.gnu.org/licenses/gpl-2.0.html). You must agree to the terms of these licenses and abide by them before viewing, utilizing, modifying, or distributing the source code contained within this distribution.
 
 ## Build Notes
-If building on el5, you will need to have buildsys-macros installed.
+
+### Tests
+```make test```
+
+### Manual
+* Install via makefile
+```sudo make install```
+
+### Fedora/EL
+* Generate the RPM
+```make``` or ```make rpms```
+
+#### EL5
+* Requires buildsys-macros installed
+
+#### COPR (publishing RPMs)
+COPR: https://copr.fedoraproject.org/coprs/xaeth/Plight/
+
+* Generate SRPM
+```make srpm```
+* Publish SRPM to a publicly available HTTP or FTP repo
+* Load the build into COPR
+```copr-cli build Plight http://example.com/paht/to/plight.src.rpm```
+
+### Debian
+* Generate deb package
+``` make debs```
+
+#### PPA (publishing DEBs)
+* Generate source package bits
+```make debsrc```
+* Change to ./artifacts/debs/ and generate signed source with changes
+```cd artifacts/debs
+debbuild -S -sa
+```
+* Push to PPA
+```dput ppa:gregswift/plight plight_VERSION_source.changes```
