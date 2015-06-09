@@ -183,10 +183,9 @@ def log_message(message):
 
 
 def stop_server():
-    if os.path.isfile(PID_FILE):
-        fp = open(PID_FILE, 'r')
-        pid = fp.read()
-        fp.close()
+    pidfile = PIDLockFile(PID_FILE)
+    if pidfile.is_locked():
+        pid = pidfile.read_pid()
         os.kill(int(pid), signal.SIGTERM)
     else:
         print('no pid file available')
