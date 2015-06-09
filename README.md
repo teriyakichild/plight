@@ -145,7 +145,8 @@ COPR: https://copr.fedoraproject.org/coprs/xaeth/Plight/
 * Generate source package bits
 ```make debsrc```
 * Change to ./artifacts/debs/ and generate signed source with changes
-```cd artifacts/debs
+```
+cd artifacts/debs
 debbuild -S -sa
 ```
 * Push to PPA
