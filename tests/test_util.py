@@ -174,8 +174,8 @@ def pidfile(tmpdir):
         from daemon.pidfile import PIDLockFile
     # Create a tmpdir for the pidfile and overwrite 
     # the current util.PID_FILE constant
-    util.PID_FILE = tmpdir.join('plight.pid').strpath
-    return PIDLockFile(util.PID_FILE)
+    util.PID_FILE = PIDLockFile(tmpdir.join('plight.pid').strpath)
+    return util.PID_FILE
 
 
 def test_running_format_get_current_state(capsys, config_file, pidfile):

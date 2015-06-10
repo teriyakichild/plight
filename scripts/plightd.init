@@ -80,7 +80,7 @@ def unlock():
         os.remove(LOCK_FILE)
 
 def verify_pid_dir():
-    pid_dir = os.path.dirname(plight.util.PID_FILE)
+    pid_dir = os.path.dirname(plight.util.PID_FILE.path)
     if not os.path.exists(pid_dir):
         import pwd
         import grp
