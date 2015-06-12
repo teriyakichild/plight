@@ -25,7 +25,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import plight
 
-PID_FILE = '/var/run/plight/plight.pid'
+PID_FILE = PIDLockFile('/var/run/plight/plight.pid')
 
 
 def get_config(config_file=plight.CONFIG_FILE):
@@ -139,14 +139,12 @@ def start_server(config):
             backupCount=config['log_rotation_count'])
         applogger.addHandler(applogging_handler)
 
-    pidfile = PIDLockFile(PID_FILE)
-
     # if pidfile is locked, do not start another process
-    if pidfile.is_locked():
+    if PID_FILE.is_locked():
         sys.stderr.write('Plight is already running\n')
         sys.exit(1)
 
-    context = DaemonContext(pidfile=pidfile,
+    context = DaemonContext(pidfile=PID_FILE,
                             uid=pwd.getpwnam(config['user']).pw_uid,
                             gid=grp.getgrnam(config['group']).gr_gid,
                             files_preserve=[
@@ -183,19 +181,20 @@ def log_message(message):
 
 
 def stop_server():
-    if os.path.isfile(PID_FILE):
-        fp = open(PID_FILE, 'r')
-        pid = fp.read()
-        fp.close()
+    if PID_FILE.is_locked():
+        pid = PID_FILE.read_pid()
         os.kill(int(pid), signal.SIGTERM)
     else:
         print('no pid file available')
 
 
 def format_get_current_state(state, details):
-    message = 'State: {0}\nCode: {1}\nMessage: {2}\n'
+    warning = ''
+    if not PID_FILE.is_locked():
+        warning = 'WARNING: plight is not running\n'
+    message = '{0}State: {1}\nCode: {2}\nMessage: {3}\n'
     sys.stdout.write(
-        message.format(state, details['code'], details['message']))
+        message.format(warning, state, details['code'], details['message']))
 
 
 def format_list_states(default, states):

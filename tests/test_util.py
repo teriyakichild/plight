@@ -92,6 +92,7 @@ message = slave node
 
 [offline]
 file = /var/lib/plight/node_offline
+
 code = 200
 message = node is offline
 """
@@ -163,8 +164,23 @@ def test_format_list_states(capsys, config_file):
     util.format_list_states('enabled', config['states'])
     out, err = capsys.readouterr()
     assert out == check
+    
+    
+@pytest.fixture
+def pidfile(tmpdir):
+    try:
+        from daemon.pidlockfile import PIDLockFile
+    except ImportError:
+        from daemon.pidfile import PIDLockFile
+    # Create a tmpdir for the pidfile and overwrite 
+    # the current util.PID_FILE constant
+    util.PID_FILE = PIDLockFile(tmpdir.join('plight.pid').strpath)
+    return util.PID_FILE
 
-def test_format_get_current_state(capsys, config_file):
+
+def test_running_format_get_current_state(capsys, config_file, pidfile):
+    if not pidfile.is_locked():
+        pidfile.acquire()
     config = util.get_config(config_file)
     states = config['states']
     check = ''
@@ -174,3 +190,22 @@ def test_format_get_current_state(capsys, config_file):
         util.format_get_current_state(state, details)
         out, err = capsys.readouterr()
         assert out == check
+    if pidfile.is_locked():
+        pidfile.release()
+
+def test_stopped_format_get_current_state(capsys, config_file, pidfile):
+    if pidfile.is_locked():
+        pidfile.release()
+    config = util.get_config(config_file)
+    states = config['states']
+    check = ''
+    for state, details in states.items():
+        warning = 'WARNING: plight is not running\n'
+        message = '{0}State: {1}\nCode: {2}\nMessage: {3}\n'
+        check = message.format(
+                    warning, state, details['code'], details['message'])
+        util.format_get_current_state(state, details)
+        out, err = capsys.readouterr()
+        assert out == check
+
+
