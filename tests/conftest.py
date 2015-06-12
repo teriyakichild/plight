@@ -112,8 +112,8 @@ def states(config):
     return config['states']
 
 @pytest.fixture(scope='function')
-def status(request):
-    status = plight.NodeStatus()
+def status(request, states):
+    status = plight.NodeStatus(states)
     def reset():
         status.set_node_enabled()
     request.addfinalizer(reset)
