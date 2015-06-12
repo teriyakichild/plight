@@ -98,7 +98,7 @@ message = node is offline
 """
 
 
-@pytest.mark.funcarg(scope='module',
+@pytest.fixture(scope='function',
                 params=[GENERIC_OLD_CONFIG,
                         GENERIC_CONFIG,
                         ALTERNATE_CONFIG])
@@ -107,11 +107,11 @@ def config(request, tmpdir):
     open(file.strpath, 'w').write(request.param)
     return util.get_config(file.strpath)
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def states(config):
     return config['states']
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def status(request):
     status = plight.NodeStatus()
     def reset():

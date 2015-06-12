@@ -2,8 +2,7 @@ import pytest
 import plight
 import plight.util as util
 
-def test_get_config(config_file):
-    config = util.get_config(config_file)
+def test_get_config(config):
     assert config
     assert config['host'] == '0.0.0.0'
     assert config['port'] == 10101
@@ -15,8 +14,8 @@ def test_get_config(config_file):
         assert state['code'] == 200
         assert state['priority'] == 0
 
-    if 'disabled' in myconfig['states']:
-        state = myconfig['states']['disabled']
+    if 'disabled' in config['states']:
+        state = config['states']['disabled']
         assert state['file'] == '/var/lib/plight/node_disabled'
         if 'old_config' in state and state['old_config']:
             assert state['code'] == 404
@@ -25,20 +24,20 @@ def test_get_config(config_file):
         assert state['command'] == 'disable'
         assert state['priority'] == 1
 
-    if 'offline' in myconfig['states']:
-        state = myconfig['states']['offline']
+    if 'offline' in config['states']:
+        state = config['states']['offline']
         assert state['file'] == '/var/lib/plight/node_offline'
         assert state['code'] == 200
         assert state['priority'] == 2
 
-    if 'master' in myconfig['states']:
-        state = myconfig['states']['master']
+    if 'master' in config['states']:
+        state = config['states']['master']
         assert state['file'] == None
         assert state['code'] == 200
         assert state['priority'] == 0
 
-    if 'slave' in myconfig['states']:
-        state = myconfig['states']['slave']
+    if 'slave' in config['states']:
+        state = config['states']['slave']
         assert state['file'] == '/var/lib/plight/node_slave'
         assert state['code'] == 200
         assert state['priority'] == 1
