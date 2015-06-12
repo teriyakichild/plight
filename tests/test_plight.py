@@ -1,13 +1,4 @@
 import pytest
-import plight
-
-@pytest.fixture(scope='module')
-def status(request):
-    status = plight.NodeStatus()
-    def reset():
-        status.set_node_enabled()
-    request.addfinalizer(reset)
-    return status
 
 # Test enabling
 def test_default_nodestatus(status):

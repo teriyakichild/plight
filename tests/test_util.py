@@ -1,112 +1,6 @@
 import pytest
-import os
+import plight
 import plight.util as util
-
-
-GENERIC_OLD_CONFIG="""
-[webserver]
-port = 10101
-host = 0.0.0.0
-user = plight
-group = plight
-logfile = /var/log/plight/access.log
-loglevel = INFO
-filesize = 1024000
-rotationcount = 10
-
-[logging]
-logfile = /var/log/plight/plight.log
-loglevel = INFO
-filesize = 1024000
-rotationcount = 10
-
-[permanents]
-statefile = /var/lib/plight/node_disabled
-"""
-
-GENERIC_CONFIG="""
-[webserver]
-port = 10101
-host = 0.0.0.0
-user = plight
-group = plight
-logfile = /var/log/plight/access.log
-loglevel = INFO
-filesize = 1024000
-rotationcount = 10
-
-[logging]
-logfile = /var/log/plight/plight.log
-loglevel = INFO
-filesize = 1024000
-rotationcount = 10
-
-[priorities]
-states=enabled,disabled,offline
-
-[disabled]
-file = /var/lib/plight/node_disabled
-command = disable
-code = 200
-message = node is unavailable
-
-[enabled]
-command = enable
-code = 200
-message = node is available
-
-[offline]
-file = /var/lib/plight/node_offline
-code = 200
-message = node is offline
-"""
-
-ALTERNATE_CONFIG="""
-[webserver]
-port = 10101
-host = 0.0.0.0
-user = plight
-group = plight
-logfile = /var/log/plight/access.log
-loglevel = INFO
-filesize = 1024000
-rotationcount = 10
-
-[logging]
-logfile = /var/log/plight/plight.log
-loglevel = INFO
-filesize = 1024000
-rotationcount = 10
-
-[priorities]
-states=master,slave,offline
-
-[master]
-code = 200
-message = master node
-
-[slave]
-file = /var/lib/plight/node_slave
-code = 200
-message = slave node
-
-[offline]
-file = /var/lib/plight/node_offline
-
-code = 200
-message = node is offline
-"""
-
-
-@pytest.fixture(scope='function',
-                params=[GENERIC_OLD_CONFIG,
-                        GENERIC_CONFIG,
-                        ALTERNATE_CONFIG])
-def config_file(request, tmpdir):
-    file = tmpdir.join('config')
-    open(file.strpath, 'w').write(request.param)
-    return file.strpath
-
 
 def test_get_config(config_file):
     config = util.get_config(config_file)
@@ -121,8 +15,8 @@ def test_get_config(config_file):
         assert state['code'] == 200
         assert state['priority'] == 0
 
-    if 'disabled' in config['states']:
-        state = config['states']['disabled']
+    if 'disabled' in myconfig['states']:
+        state = myconfig['states']['disabled']
         assert state['file'] == '/var/lib/plight/node_disabled'
         if 'old_config' in state and state['old_config']:
             assert state['code'] == 404
@@ -131,27 +25,25 @@ def test_get_config(config_file):
         assert state['command'] == 'disable'
         assert state['priority'] == 1
 
-    if 'offline' in config['states']:
-        state = config['states']['offline']
+    if 'offline' in myconfig['states']:
+        state = myconfig['states']['offline']
         assert state['file'] == '/var/lib/plight/node_offline'
         assert state['code'] == 200
         assert state['priority'] == 2
 
-    if 'master' in config['states']:
-        state = config['states']['master']
+    if 'master' in myconfig['states']:
+        state = myconfig['states']['master']
         assert state['file'] == None
         assert state['code'] == 200
         assert state['priority'] == 0
 
-    if 'slave' in config['states']:
-        state = config['states']['slave']
+    if 'slave' in myconfig['states']:
+        state = myconfig['states']['slave']
         assert state['file'] == '/var/lib/plight/node_slave'
         assert state['code'] == 200
         assert state['priority'] == 1
 
-def test_format_list_states(capsys, config_file):
-    config = util.get_config(config_file)
-    states = config['states']
+def test_format_list_states(capsys, states):
     check = ''
     for state, details in states.items():
         if details['file'] is None:
@@ -161,28 +53,13 @@ def test_format_list_states(capsys, config_file):
         check += 'State: {0}{1}\nCode: {2}\nMessage: {3}\n\n'.format(
             state, message_modifier, details['code'], details['message'])
 
-    util.format_list_states('enabled', config['states'])
+    util.format_list_states('enabled', states)
     out, err = capsys.readouterr()
     assert out == check
-    
-    
-@pytest.fixture
-def pidfile(tmpdir):
-    try:
-        from daemon.pidlockfile import PIDLockFile
-    except ImportError:
-        from daemon.pidfile import PIDLockFile
-    # Create a tmpdir for the pidfile and overwrite 
-    # the current util.PID_FILE constant
-    util.PID_FILE = PIDLockFile(tmpdir.join('plight.pid').strpath)
-    return util.PID_FILE
 
-
-def test_running_format_get_current_state(capsys, config_file, pidfile):
+def test_running_format_get_current_state(capsys, states, pidfile):
     if not pidfile.is_locked():
         pidfile.acquire()
-    config = util.get_config(config_file)
-    states = config['states']
     check = ''
     for state, details in states.items():
         message = 'State: {0}\nCode: {1}\nMessage: {2}\n'
@@ -193,11 +70,9 @@ def test_running_format_get_current_state(capsys, config_file, pidfile):
     if pidfile.is_locked():
         pidfile.release()
 
-def test_stopped_format_get_current_state(capsys, config_file, pidfile):
+def test_stopped_format_get_current_state(capsys, states, pidfile):
     if pidfile.is_locked():
         pidfile.release()
-    config = util.get_config(config_file)
-    states = config['states']
     check = ''
     for state, details in states.items():
         warning = 'WARNING: plight is not running\n'
@@ -207,5 +82,3 @@ def test_stopped_format_get_current_state(capsys, config_file, pidfile):
         util.format_get_current_state(state, details)
         out, err = capsys.readouterr()
         assert out == check
-
-
