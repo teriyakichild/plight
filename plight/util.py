@@ -9,10 +9,6 @@ import sys
 import time
 import signal
 try:
-    import ConfigParser
-except ImportError:
-    import configparser as ConfigParser
-try:
     import BaseHTTPServer
 except ImportError:
     import http.server as BaseHTTPServer
@@ -24,97 +20,9 @@ except ImportError:
 import logging
 from logging.handlers import RotatingFileHandler
 import plight
+import plight.config as config
 
-PID_FILE = PIDLockFile('/var/run/plight/plight.pid')
-
-
-def get_config(config_file=plight.CONFIG_FILE):
-    parser = ConfigParser.ConfigParser()
-    parser.read(config_file)
-    config = {
-        'host': parser.get('webserver', 'host'),
-        'port': parser.getint('webserver', 'port'),
-        'user': parser.get('webserver', 'user'),
-        'group': parser.get('webserver', 'group'),
-        'web_log_file': parser.get('webserver', 'logfile'),
-        'web_log_level': getattr(logging,
-                                 parser.get('webserver', 'loglevel')),
-        'web_log_filesize': parser.getint('webserver', 'filesize'),
-        'web_log_rotation_count': parser.getint('webserver', 'rotationcount'),
-        'log_file': parser.get('logging', 'logfile'),
-        'log_level': getattr(logging,
-                             parser.get('logging', 'loglevel')),
-        'log_filesize': parser.getint('logging', 'filesize'),
-        'log_rotation_count': parser.getint('logging', 'rotationcount')
-    }
-    logger = logging.getLogger('plight')
-    logger.setLevel(config['log_level'])
-    config['states'] = process_states_from_config(parser, logger)
-    return config
-
-
-def process_states_from_config(parser, logger):
-    # The old state_file setup was the true/false existance
-    # of state_file. If the old configuration setup is being used,
-    # we want to reproduce that behavior. The definition of
-    # state_file will act as old vs new configuration key.
-    state_file = None
-    # Load in the default states
-    states = plight.STATES
-    try:
-        state_file = parser.get('permanents', 'statefile')
-    except ConfigParser.NoSectionError:
-        pass
-    if state_file is not None:
-        logger.warn('Permanents section is deprecated, see release notes')
-        states['disabled']['file'] = state_file
-        states['disabled']['old_config'] = True
-        states.pop('offline', None)
-    if 'old_config' not in states['disabled']:
-        # We are on the new config.  Valid states are pulled
-        # from the defined priorities.states, which should be ordered
-        # from lowest to highest priority.
-        err = None
-        try:
-            priorities = parser.get('priorities', 'states').split(',')
-        except ConfigParser.NoSectionError:
-            err = 'No priorities section defined in config file'
-        except ConfigParser.NoOptionError:
-            err = 'Missing states option in priorities section of config file'
-        finally:
-            if err:
-                logger.error(err)
-                raise Exception(err)
-        # Based on the defined priorties we want to remove unused states
-        keep_states = {}
-        for state in states:
-            if state in priorities:
-                keep_states[state] = states[state]
-        states = keep_states
-        # Now we want to loop through the requested states
-        for state in priorities:
-            # Error if values aren't provided
-            if not parser.has_section(state) and state not in states:
-                err = 'Priorities contains undefined state {0}'.format(state)
-                logger.error(err)
-                raise Exception(err)
-            if state not in states:
-                states[state] = {'priority': priorities.index(state)}
-            for option in plight.STATES['enabled']:
-                try:
-                    states[state][option] = parser.get(state, option)
-                except ConfigParser.NoOptionError:
-                    if option in ['command', 'priority']:
-                        continue
-                    if option == 'file':
-                        states[state][option] = None
-                        continue
-                    raise
-                try:
-                    states[state][option] = int(states[state][option])
-                except ValueError:
-                    pass
-    return states
+PID = PIDLockFile(config.PID_FILE)
 
 
 def start_server(config):
@@ -140,11 +48,11 @@ def start_server(config):
         applogger.addHandler(applogging_handler)
 
     # if pidfile is locked, do not start another process
-    if PID_FILE.is_locked():
+    if PID.is_locked():
         sys.stderr.write('Plight is already running\n')
         sys.exit(1)
 
-    context = DaemonContext(pidfile=PID_FILE,
+    context = DaemonContext(pidfile=PID,
                             uid=pwd.getpwnam(config['user']).pw_uid,
                             gid=grp.getgrnam(config['group']).gr_gid,
                             files_preserve=[
@@ -181,8 +89,8 @@ def log_message(message):
 
 
 def stop_server():
-    if PID_FILE.is_locked():
-        pid = PID_FILE.read_pid()
+    if PID.is_locked():
+        pid = PID.read_pid()
         os.kill(int(pid), signal.SIGTERM)
     else:
         print('no pid file available')
@@ -190,7 +98,7 @@ def stop_server():
 
 def format_get_current_state(state, details):
     warning = ''
-    if not PID_FILE.is_locked():
+    if not PID.is_locked():
         warning = 'WARNING: plight is not running\n'
     message = '{0}State: {1}\nCode: {2}\nMessage: {3}\n'
     sys.stdout.write(
@@ -216,7 +124,7 @@ def cli_fail(commands):
 
 
 def run():
-    config = get_config()
+    config = config.get_config()
     node = plight.NodeStatus(states=config['states'])
 
     try:

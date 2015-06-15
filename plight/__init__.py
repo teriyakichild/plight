@@ -21,30 +21,7 @@ except ImportError:
     from http.server import test as http_server_test
     from http.server import SimpleHTTPRequestHandler
 
-STATES = {
-    'enabled': {
-        'command': 'enable',
-        'file': None,
-        'code': 200,
-        'message': 'OK',
-        'priority': 0
-    },
-    'disabled': {
-        'command': 'disable',
-        'file': '/var/tmp/node_disabled',
-        'code': 404,
-        'message': 'node is unavailable',
-        'priority': 1
-    },
-    'offline': {
-        'file': '/var/tmp/node_offline',
-        'code': 503,
-        'message': 'node is offline',
-        'priority': 2
-    },
-}
-CONFIG_FILE = '/etc/plight.conf'
-
+from plight.config import STATES, CONFIG_FILE
 
 class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
 

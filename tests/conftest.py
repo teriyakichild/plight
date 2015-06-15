@@ -1,6 +1,7 @@
 import pytest
 import os
 import plight
+import plight.config as plconfig
 import plight.util as util
 
 
@@ -105,7 +106,7 @@ message = node is offline
 def config(request, tmpdir):
     file = tmpdir.join('config')
     open(file.strpath, 'w').write(request.param)
-    return util.get_config(file.strpath)
+    return plconfig.get_config(file.strpath)
 
 @pytest.fixture(scope='function')
 def states(config):
@@ -127,5 +128,5 @@ def pidfile(tmpdir):
         from daemon.pidfile import PIDLockFile
     # Create a tmpdir for the pidfile and overwrite
     # the current util.PID_FILE constant
-    util.PID_FILE = PIDLockFile(tmpdir.join('plight.pid').strpath)
-    return util.PID_FILE
+    util.PID = PIDLockFile(tmpdir.join('plight.pid').strpath)
+    return util.PID
