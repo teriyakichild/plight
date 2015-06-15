@@ -22,7 +22,7 @@ filesize = 1024000
 rotationcount = 10
 
 [permanents]
-statefile = /var/lib/plight/node_disabled
+statefile = /var/tmp/node_disabled
 """
 
 GENERIC_CONFIG="""
@@ -46,7 +46,7 @@ rotationcount = 10
 states=enabled,disabled,offline
 
 [disabled]
-file = /var/lib/plight/node_disabled
+file = /var/tmp/node_disabled
 command = disable
 code = 200
 message = node is unavailable
@@ -57,7 +57,7 @@ code = 200
 message = node is available
 
 [offline]
-file = /var/lib/plight/node_offline
+file = /var/tmp/node_offline
 code = 200
 message = node is offline
 """
@@ -87,12 +87,12 @@ code = 200
 message = master node
 
 [slave]
-file = /var/lib/plight/node_slave
+file = /var/tmp/node_slave
 code = 200
 message = slave node
 
 [offline]
-file = /var/lib/plight/node_offline
+file = /var/tmp/node_offline
 code = 200
 message = node is offline
 """

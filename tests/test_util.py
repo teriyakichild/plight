@@ -16,7 +16,7 @@ def test_get_config(config):
 
     if 'disabled' in config['states']:
         state = config['states']['disabled']
-        assert state['file'] == '/var/lib/plight/node_disabled'
+        assert state['file'] == '/var/tmp/node_disabled'
         if 'old_config' in state and state['old_config']:
             assert state['code'] == 404
         else:
@@ -26,7 +26,7 @@ def test_get_config(config):
 
     if 'offline' in config['states']:
         state = config['states']['offline']
-        assert state['file'] == '/var/lib/plight/node_offline'
+        assert state['file'] == '/var/tmp/node_offline'
         assert state['code'] == 200
         assert state['priority'] == 2
 
@@ -38,7 +38,7 @@ def test_get_config(config):
 
     if 'slave' in config['states']:
         state = config['states']['slave']
-        assert state['file'] == '/var/lib/plight/node_slave'
+        assert state['file'] == '/var/tmp/node_slave'
         assert state['code'] == 200
         assert state['priority'] == 1
 
