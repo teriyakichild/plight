@@ -120,7 +120,7 @@ def status(request, states):
     request.addfinalizer(reset)
     return status
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def pidfile(tmpdir):
     try:
         from daemon.pidlockfile import PIDLockFile
