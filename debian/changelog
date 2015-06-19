@@ -1,3 +1,9 @@
+plight (0.1.2~trusty1) trusty; urgency=low
+
+  * Fixes to work better when singleton doesnt take, like on py2.6
+
+ -- Greg Swift <greg.swift@rackspace.com>  Tue, 19 Jun 2015 15:12:06 +0000
+
 plight (0.1.1~trusty1) trusty; urgency=low
 
   * Update control files
