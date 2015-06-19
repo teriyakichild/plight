@@ -25,7 +25,6 @@ from __future__ import print_function
 
 import os
 import sys
-import plight.config
 import plight.util
 
 ##### Globals #######################
@@ -81,7 +80,7 @@ def unlock():
         os.remove(LOCK_FILE)
 
 def verify_pid_dir():
-    pid_dir = os.path.dirname(plight.config.PID_FILE)
+    pid_dir = os.path.dirname(plight.util.PID_FILE.path)
     if not os.path.exists(pid_dir):
         import pwd
         import grp
@@ -101,12 +100,12 @@ def start():
     except:
         echo_failure()
         sys.stderr.write('Verify that {0} exists and is owned by plight\n'.format(
-            os.path.dirname(plight.config.PID_FILE)))
+            os.path.dirname(plight.util.PID_FILE)))
     lock()
     # success first because the daemonize stop the printing
     # TODO: fixme
     echo_success()
-    plight.util.start_server(config=plight.config.get_config())
+    plight.util.start_server(config=plight.util.get_config())
 
 def stop():
     """
