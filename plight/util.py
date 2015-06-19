@@ -20,9 +20,9 @@ except ImportError:
 import logging
 from logging.handlers import RotatingFileHandler
 import plight
-import plight.config as config
+import plight.config as plconfig
 
-PID = PIDLockFile(config.PID_FILE)
+PID = PIDLockFile(plconfig.PID_FILE)
 
 
 def start_server(config):
@@ -124,7 +124,7 @@ def cli_fail(commands):
 
 
 def run():
-    config = config.get_config()
+    config = plconfig.get_config()
     node = plight.NodeStatus(states=config['states'])
 
     try:

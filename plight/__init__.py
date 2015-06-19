@@ -21,7 +21,7 @@ except ImportError:
     from http.server import test as http_server_test
     from http.server import SimpleHTTPRequestHandler
 
-import plight.config as config
+import plight.config as plconfig
 
 class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
 
@@ -49,7 +49,7 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
         This will return the NodeStatus object for this object
         """
         if self._node_status is None:
-            states = config.get_config()['states']
+            states = plconfig.get_config()['states']
             self._node_status = NodeStatus(states)
         return self._node_status
 
@@ -154,7 +154,7 @@ class NodeStatus(Singleton):
     _applogger = None
     _default_state = None
 
-    def __init__(self, states=config.STATES):
+    def __init__(self, states=plconfig.STATES):
         self._applogger = logging.getLogger('plight')
         self.states = states
         self._commands = {}
