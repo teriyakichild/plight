@@ -4,7 +4,7 @@
 %{!?_unitdir: %define _unitdir /usr/lib/systemd/system}
 
 Name:           plight
-Version:        0.1.1
+Version:        0.1.2
 Release:        1%{?dist}
 Group:          Applications/Systems
 Summary:        Application agnostic tool to represent node availability.
@@ -118,6 +118,9 @@ fi
 %endif
 
 %changelog
+* Fri Jun 19 2015 Greg Swift <greg.swift@rackspace.com> - 0.1.2-1
+- Fixes to work better when singleton doesnt take, like on py2.6
+
 * Fri May 29 2015 Greg Swift <greg.swift@rackspace.com> - 0.1.1-1
 - Updates to syncronize with new debian package
 - Use /var/lib/plight as home, not /var/run - old users will have to manually deal
