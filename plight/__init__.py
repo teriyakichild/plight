@@ -21,30 +21,7 @@ except ImportError:
     from http.server import test as http_server_test
     from http.server import SimpleHTTPRequestHandler
 
-STATES = {
-    'enabled': {
-        'command': 'enable',
-        'file': None,
-        'code': 200,
-        'message': 'OK',
-        'priority': 0
-    },
-    'disabled': {
-        'command': 'disable',
-        'file': '/var/tmp/node_disabled',
-        'code': 404,
-        'message': 'node is unavailable',
-        'priority': 1
-    },
-    'offline': {
-        'file': '/var/tmp/node_offline',
-        'code': 503,
-        'message': 'node is offline',
-        'priority': 2
-    },
-}
-CONFIG_FILE = '/etc/plight.conf'
-
+import plight.config as plconfig
 
 class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
 
@@ -72,7 +49,8 @@ class StatusHTTPRequestHandler(SimpleHTTPRequestHandler, object):
         This will return the NodeStatus object for this object
         """
         if self._node_status is None:
-            self._node_status = NodeStatus()
+            states = plconfig.get_config()['states']
+            self._node_status = NodeStatus(states)
         return self._node_status
 
     def get_web_logger(self):
@@ -176,7 +154,7 @@ class NodeStatus(Singleton):
     _applogger = None
     _default_state = None
 
-    def __init__(self, states=STATES):
+    def __init__(self, states=plconfig.STATES):
         self._applogger = logging.getLogger('plight')
         self.states = states
         self._commands = {}
