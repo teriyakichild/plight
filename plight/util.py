@@ -26,6 +26,7 @@ PID = PIDLockFile(plconfig.PID_FILE)
 
 
 def start_server(config):
+    os.umask(0o022)
     weblogger = logging.getLogger('plight_httpd')
     weblogger.setLevel(config['web_log_level'])
     if weblogger.handlers == []:
@@ -58,11 +59,12 @@ def start_server(config):
                             files_preserve=[
                                 weblogging_handler.stream,
                                 applogging_handler.stream,
-                            ],)
+                            ],
+                            umask=0o022,)
+
     context.stdout = applogging_handler.stream
     context.stderr = applogging_handler.stream
     context.open()
-    os.umask(0o022)
 
     try:
         try:
