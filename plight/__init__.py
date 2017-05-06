@@ -3,7 +3,7 @@
 
 """
 
-__version__ = '0.1.2'
+__version__ = '0.1.4'
 __license__ = 'ASLv2'
 __all__ = ['StatusHTTPRequestHandler', 'NodeStatus']
 __author__ = 'Alex Schultz'
