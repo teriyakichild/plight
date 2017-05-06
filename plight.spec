@@ -4,7 +4,7 @@
 %{!?_unitdir: %define _unitdir /usr/lib/systemd/system}
 
 Name:           plight
-Version:        0.1.3
+Version:        0.1.4
 Release:        1%{?dist}
 Group:          Applications/Systems
 Summary:        Application agnostic tool to represent node availability.
@@ -118,6 +118,10 @@ fi
 %endif
 
 %changelog
+* Sat May 06 2017 Chad Wilson <chad.wilson@rackspace.com> - 0.1.4-1
+- Bump version in spec file and __init__.py
+- Bump to 0.1.4 since 0.1.3 is already tagged in github
+
 * Mon Apr 10 2017 Jonathan Kelley <jon.kelley@rackspace.com> - 0.1.3-1
 - Make umask set first thing in start_server()
 - Add default umask to daemonContext
