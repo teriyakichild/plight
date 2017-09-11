@@ -16,7 +16,6 @@ install:
   - sudo pip install .
   - pip install -r requirements.txt
 before_script:
-  - sudo pip install python-daemon
   - sudo chmod 755 /etc/init.d/plightd
   - sudo /etc/init.d/plightd start
   - sudo chown travis:travis /var/lib/plight/
