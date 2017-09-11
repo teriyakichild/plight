@@ -4,9 +4,21 @@ python:
   - "2.7"
   - "3.2"
   - "3.3"
+before_install:
+  - sudo useradd -d /home/plight -m plight
+  - sudo mkdir /var/lib/plight
+  - sudo chown plight:plight /var/lib/plight/
+  - sudo mkdir /var/log/plight
+  - sudo chown plight:plight /var/log/plight
 # command to install dependencies
 install:
+  - sudo make install DESTDIR=/
   - sudo pip install .
   - pip install -r requirements.txt
+before_script:
+  - sudo chmod 755 /etc/init.d/plightd
+  - sudo /etc/init.d/plightd start
+  - sudo chown travis:travis /var/lib/plight/
 # command to run tests
-script: make test
+script:
+  - make test
