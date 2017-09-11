@@ -53,7 +53,7 @@ manpage:
 	-gzip -c docs/${PACKAGE}.1 > docs/${PACKAGE}.1.gz
 
 test:
-	PYTHONPATH=$(pwd) pytest -sv
+	PYTHONPATH=$(pwd) pytest
 
 build: clean manpage
 	${PYTHON} setup.py build -f
