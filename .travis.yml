@@ -13,6 +13,8 @@ before_install:
 # command to install dependencies
 install:
   - sudo make install DESTDIR=/
+  - make debs
+  - sudo 
   - sudo pip install -r requirements.txt
   - pip install .
 

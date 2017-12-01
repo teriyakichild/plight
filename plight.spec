@@ -59,13 +59,17 @@ rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --root $RPM_BUILD_ROOT
 mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{name}
-mkdir -p %{buildroot}%{_initddir}
+mkdir -p %{buildroot}%{_initdir}
 mkdir -p %{buildroot}%{_unitdir}
+mkdir -p %{buildroot}%{_sysconfdir}
+cp plight.conf %{buildroot}%{_sysconfdir}/%{name}.conf
+cp scripts/%{service_name}.init %{buildroot}%{_initdir}/%{service_name}.init
+cp scripts/%{service_name}.service %{buildroot}%{_unitdir}/%{service_name}.service
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
-    mv %{buildroot}/etc/init.d/%{service_name}.init %{buildroot}%{__initddir}/%{service_name}
+    mv %{buildroot}%{_initdir}%{service_name}.init %{buildroot}%{_initdir}/%{service_name}
     rm -rf %{buildroot}%{_unitdir}
 %else
-    rm -rf %{buildroot}/etc/init.d
+    rm -rf %{buildroot}%{_initdir}
 %endif
 
 
