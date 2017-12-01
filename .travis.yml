@@ -2,8 +2,8 @@ language: python
 python:
   - "2.6"
   - "2.7"
-  - "3.2"
-  - "3.3"
+  - "3.4"
+  - "3.5"
 before_install:
   - sudo useradd -d /home/plight -m plight
   - sudo mkdir /var/lib/plight
@@ -13,9 +13,9 @@ before_install:
 # command to install dependencies
 install:
   - sudo make install DESTDIR=/
-  - sudo pip install .
-  - pip install -r requirements.txt
-  - pip install -r build_requirements.txt
+  - sudo pip install -r requirements.txt
+  - pip install .
+
 before_script:
   - sudo chmod 755 /etc/init.d/plightd
   - sudo /etc/init.d/plightd start

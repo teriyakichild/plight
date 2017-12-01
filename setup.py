@@ -32,9 +32,9 @@ if __name__ == "__main__":
         entry_points={
             'console_scripts': [ 'plight = plight.util:run' ],
         },
-        data_files=[('/etc/init.d', ['scripts/plightd.init']),
-                    ('/usr/lib/systemd/system', ['scripts/plightd.service']),
-                    ('/etc', ['plight.conf']),],
+        #data_files=[('/etc/init.d', ['scripts/plightd.init']),
+        #            ('/usr/lib/systemd/system', ['scripts/plightd.service']),
+        #            ('/etc', ['plight.conf']),],
         install_requires = required_pkgs,
         build_requires = build_required_pkgs
     )
