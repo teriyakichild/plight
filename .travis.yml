@@ -4,24 +4,23 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
-before_install:
-  - sudo useradd -d /home/plight -m plight
-  - sudo mkdir /var/lib/plight
-  - sudo chown plight:plight /var/lib/plight/
-  - sudo mkdir /var/log/plight
-  - sudo chown plight:plight /var/log/plight
+#before_install:
+#  - sudo useradd -d /home/plight -m plight
+#  - sudo mkdir /var/lib/plight
+#  - sudo chown plight:plight /var/lib/plight/
+#  - sudo mkdir /var/log/plight
+#  - sudo chown plight:plight /var/log/plight
 # command to install dependencies
 install:
-  - sudo make install DESTDIR=/
-  - make debs
-  - sudo 
-  - sudo pip install -r requirements.txt
-  - pip install .
+  - sudo make debs
+  - find . -name 'plight*.deb' -exec sudo pkg -i {} \;
+#  - sudo pip install -r requirements.txt
+#  - pip install .
 
 before_script:
-  - sudo chmod 755 /etc/init.d/plightd
+#  - sudo chmod 755 /etc/init.d/plightd
   - sudo /etc/init.d/plightd start
-  - sudo chown travis:travis /var/lib/plight/
+#  - sudo chown travis:travis /var/lib/plight/
 # command to run tests
 script:
   - make test

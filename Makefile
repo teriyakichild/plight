@@ -59,10 +59,9 @@ build: clean manpage
 	${PYTHON} setup.py build -f
 
 install: build
-	install -m 0755 -o plight -g plight -d ${DESTDIR}/var/lib/${PACKAGE}
-	install -m 0755 -o plight -g plight -d ${DESTDIR}/var/log/${PACKAGE}
+	install -m 0755 -d ${DESTDIR}/var/lib/${PACKAGE}
+	install -m 0755 -d ${DESTDIR}/var/log/${PACKAGE}
 	${PYTHON} setup.py install -f --root ${DESTDIR}
-	mv ${DESTDIR}/etc/init.d/plightd.init ${DESTDIR}/etc/init.d/plightd
 
 install_rpms: rpms
 	yum install ${RPMDIR}/${ARCH}/${PACKAGE}*.${ARCH}.rpm

@@ -63,10 +63,9 @@ mkdir -p %{buildroot}%{_initdir}
 mkdir -p %{buildroot}%{_unitdir}
 mkdir -p %{buildroot}%{_sysconfdir}
 cp plight.conf %{buildroot}%{_sysconfdir}/%{name}.conf
-cp scripts/%{service_name}.init %{buildroot}%{_initdir}/%{service_name}.init
+cp scripts/%{service_name}.init %{buildroot}%{_initdir}/%{service_name}
 cp scripts/%{service_name}.service %{buildroot}%{_unitdir}/%{service_name}.service
 %if 0%{?rhel} == 5 || 0%{?rhel} == 6
-    mv %{buildroot}%{_initdir}%{service_name}.init %{buildroot}%{_initdir}/%{service_name}
     rm -rf %{buildroot}%{_unitdir}
 %else
     rm -rf %{buildroot}%{_initdir}
