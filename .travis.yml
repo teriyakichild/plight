@@ -4,7 +4,8 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
-#before_install:
+before_install:
+  - sudo apt-get -y install build-essential debhelper devscripts python-all python-setuptools
 #  - sudo useradd -d /home/plight -m plight
 #  - sudo mkdir /var/lib/plight
 #  - sudo chown plight:plight /var/lib/plight/
