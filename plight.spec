@@ -5,7 +5,7 @@
 
 Name:           plight
 Version:        0.1.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Group:          Applications/Systems
 Summary:        Application agnostic tool to represent node availability.
 
